@@ -147,10 +147,16 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
             n = len(fracs)
             mean_fr_ref = sum([x[0] for x in fracs if not x is None]) / n
             mean_fr_snp = sum([x[1] for x in fracs if not x is None]) / n
+            
+            fr_ref, fr_mut = 'NaN', 'NaN'
+            if counts[4] != 0.0:
+                fr_ref, fr_mut = counts[2]/float(counts[4]), counts[3]/float(counts[4])
+                
+            
             data = [n_reads, len(snps), len(covered), counts[0], counts[1], undecided,
                     mean_fr_ref, mean_fr_snp,
                     counts[2], counts[3], counts[4],
-                    counts[2]/float(counts[4]), counts[3]/float(counts[4]), 
+                    fr_ref, fr_mut, 
                     '|'.join(classes)]
             
             outstr = '%s\n' % '\t'.join(idstr + map(str, data))
