@@ -46,24 +46,6 @@ def count_bases(samfile, contig, pos, cutoff=-5):
     return counts
     
     
-    #                # ratio = snpbase/refbase
-#                if len(basecount) == 0:
-#                    comment.append('not-supported-%i' % i)
-#                elif len(basecount) == 1:
-#                    if (snpline.refbase in basecount) or \
-#                            (snpline.mutation in basecount):
-#                        comment.append('unique-snp-%i' % i)
-#                    else:
-#                        comment.append('weird-unique-snp-%i' % i)
-#                elif len(basecount) == 2:
-#                    if (snpline.refbase in basecount) or \
-#                            (snpline.mutation in basecount):
-#                        comment.append('undecided-snp-%i' % i)
-#                    else:
-#                        comment.append('weird-multisnp-%i' % i)
-#                else:
-#                    comment.append('multisnp-%i-%i' % (len(basecount), i))
-
 def classify_position_from_basecount(basecount, refbase, snpbase, index):
     comment = ''    
     if len(basecount) == 0:
@@ -94,6 +76,11 @@ def process_snps(snps, snp_d, contig, samfile):
     snps_supporting_mutation = 0
     snps_supporting_reference = 0 
     covered_snps = []  
+    
+    reads_supporting_mutation = 0
+    reads_supporting_reference = 0
+    total_reads = 0    
+    
     for i, snp in enumerate(snps):
         snp_reads = [read
                      for read in samfile.fetch(contig, 
@@ -102,6 +89,11 @@ def process_snps(snps, snp_d, contig, samfile):
         snpline = snp_d.get((contig, snp[1] + 1))
         refbase = float(basecount.get(snpline.refbase, 0.0))
         snpbase = float(basecount.get(snpline.mutation, 0.0))
+        
+        reads_supporting_mutation += snpbase
+        reads_supporting_reference += refbase
+        total_reads += sum(basecount.values())
+        
         if len(basecount) > 0:
             snp_fracs.append((refbase/sum(basecount.values()),
                               snpbase/sum(basecount.values())))
@@ -125,7 +117,8 @@ def process_snps(snps, snp_d, contig, samfile):
         if len(snp_reads) > 0:
             covered_snps.append((snp, len(snp_reads)))
             
-    counts = (snps_supporting_reference, snps_supporting_mutation)
+    counts = (snps_supporting_reference, snps_supporting_mutation,
+              reads_supporting_reference, reads_supporting_mutation, total_reads)
     return snp_classes, snp_fracs, covered_snps, counts
         
     
@@ -155,7 +148,10 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
             mean_fr_ref = sum([x[0] for x in fracs if not x is None]) / n
             mean_fr_snp = sum([x[1] for x in fracs if not x is None]) / n
             data = [n_reads, len(snps), len(covered), counts[0], counts[1], undecided,
-                    mean_fr_ref, mean_fr_snp, '|'.join(classes)]
+                    mean_fr_ref, mean_fr_snp,
+                    counts[2], counts[3], counts[4],
+                    counts[2]/float(counts[4]), counts[3]/float(counts[4]), 
+                    '|'.join(classes)]
             
             outstr = '%s\n' % '\t'.join(idstr + map(str, data))
             fo.write(outstr)
@@ -176,7 +172,10 @@ def main(argv):
     col_headers = ['Contig', 'Start', 'End', 'Gene', 'Genetype', 
                    '#reads', '#snps', '#covered',
                    '#support_ref', '#support_mut', 
-                   'undecided', 'fr_ref', 'fr_snp', 'comment']
+                   'undecided', 'fr_ref', 'fr_snp', 
+                   '#rsupport_ref', '#rsupport_mut', '#valid_reads',
+                   'rfr_ref', 'rfr_mut', 
+                   'comment']
 
 
     samfile = pysam.Samfile(argv[0], 'rb')
@@ -188,7 +187,7 @@ def main(argv):
     polymorphs = read_polymorphs(open(argv[1]))
     snp_d = SNPDict(open(argv[2]))    
     
-    process_gff(open(argv[3]), polymorphs, snp_d, samfile, fo, fo2, min_reads=MIN_READS)
+    process_gff(open(argv[3]), polymorphs, snp_d, samfile, fo, fo2, min_reads=MIN_NREADS)
     fo2.close()
     fo.close()
     
