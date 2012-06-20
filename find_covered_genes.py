@@ -157,7 +157,7 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
             fo.write(outstr)
             fo2.write(outstr)
             for read in reads:
-                for2.write('%s\n' % read)
+                fo2.write('%s\n' % read)
     
     return None
     
