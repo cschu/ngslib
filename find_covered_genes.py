@@ -45,6 +45,126 @@ def count_bases(samfile, contig, pos, cutoff=-5):
     del counts['bad']
     return counts
     
+    
+    #                # ratio = snpbase/refbase
+#                if len(basecount) == 0:
+#                    comment.append('not-supported-%i' % i)
+#                elif len(basecount) == 1:
+#                    if (snpline.refbase in basecount) or \
+#                            (snpline.mutation in basecount):
+#                        comment.append('unique-snp-%i' % i)
+#                    else:
+#                        comment.append('weird-unique-snp-%i' % i)
+#                elif len(basecount) == 2:
+#                    if (snpline.refbase in basecount) or \
+#                            (snpline.mutation in basecount):
+#                        comment.append('undecided-snp-%i' % i)
+#                    else:
+#                        comment.append('weird-multisnp-%i' % i)
+#                else:
+#                    comment.append('multisnp-%i-%i' % (len(basecount), i))
+
+def classify_position_from_basecount(basecount, refbase, snpbase, index):
+    comment = ''    
+    if len(basecount) == 0:
+        comment = 'not-supported-%i' % index
+    elif len(basecount) == 1:
+        if (refbase in basecount) or (snpbase in basecount):
+            comment = 'unique-snp-%i' % index
+        else:
+            comment = 'weird-unique-snp-%i' % index
+    elif len(basecount) == 2:
+        if (refbase in basecount) or (snpbase in basecount):
+            comment = 'undecided-snp-%i' % index
+        else:
+            comment = 'weird-multisnp-%i' % index
+    else:
+        comment = 'multisnp-%i-%i' % (len(basecount), index)
+        
+    return comment
+
+
+def get_reads(samfile, contig, start, end):
+    return [read.qname 
+            for read in samfile.fetch(contig, start, end)]
+    
+def process_snps(snps, snp_d, contig, samfile):
+    snp_classes = []
+    snp_fracs = []
+    snps_supporting_mutation = 0
+    snps_supporting_reference = 0 
+    covered_snps = []  
+    for i, snp in enumerate(snps):
+        snp_reads = [read
+                     for read in samfile.fetch(contig, 
+                                               start=snp[1], end=snp[1] + 1)]
+        basecount = count_bases(samfile, contig, snp[1])
+        snpline = snp_d.get((contig, snp[1] + 1))
+        refbase = float(basecount.get(snpline.refbase, 0.0))
+        snpbase = float(basecount.get(snpline.mutation, 0.0))
+        if len(basecount) > 0:
+            snp_fracs.append((refbase/sum(basecount.values()),
+                              snpbase/sum(basecount.values())))
+        else:
+            snp_fracs.append(None)
+        cur_comment = classify_position_from_basecount(basecount,
+                                                       snpline.refbase, 
+                                                       snpline.mutation, i)
+        snp_classes.append(cur_comment)
+        
+        if len(basecount) == 0:
+            pass
+        elif refbase > snpbase:
+            snps_supporting_reference += 1.0
+        elif snpbase > refbase:
+            snps_supporting_mutation += 1.0
+        else:
+            snps_supporting_reference += 0.5
+            snps_supporting_mutation += 0.5
+        
+        if len(snp_reads) > 0:
+            covered_snps.append((snp, len(snp_reads)))
+            
+    counts = (snps_supporting_reference, snps_supporting_mutation)
+    return snp_classes, snp_fracs, covered_snps, counts
+        
+    
+
+def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
+    
+    for gffline in open_gff:
+        gffline = gffline.split('\t')
+        start, end = map(lambda x:x-1, map(int, gffline[3:5]))
+        contig = gffline[0]
+        reads = get_reads(samfile, contig, start, end)
+        n_reads = len(reads)
+        
+        if n_reads >= min_reads:
+            comments_d = parse_gff_comments(gffline[8])
+            geneid = comments_d.get('ID', 'N/A')
+            idstr = gffline[:1] + gffline[3:5] + [geneid, 
+                                                  comments_d.get('Note', 'N/A')]
+            snps = polymorphs.get(geneid, [])
+            if len(snps) == 0:
+                continue
+            
+            classes, fracs, covered, counts = process_snps(snps, snp_d, 
+                                                           contig, samfile)
+            undecided = len(snps) - sum(counts)
+            n = len(fracs)
+            mean_fr_ref = sum([x[0] for x in fracs if not x is None]) / n
+            mean_fr_snp = sum([x[1] for x in fracs if not x is None]) / n
+            data = [n_reads, len(snps), len(covered), counts[0], counts[1], undecided,
+                    mean_fr_ref, mean_fr_snp, '|'.join(classes)]
+            
+            outstr = '%s\n' % '\t'.join(idstr + map(str, data))
+            fo.write(outstr)
+            fo2.write(outstr)
+            for read in reads:
+                for2.write('%s\n' % read)
+    
+    return None
+    
         
         
 
@@ -56,7 +176,7 @@ def main(argv):
     col_headers = ['Contig', 'Start', 'End', 'Gene', 'Genetype', 
                    '#reads', '#snps', '#covered',
                    '#support_ref', '#support_mut', 
-                   '.', 'fr_ref', 'fr_snp', 'comment']
+                   'undecided', 'fr_ref', 'fr_snp', 'comment']
 
 
     samfile = pysam.Samfile(argv[0], 'rb')
@@ -67,8 +187,14 @@ def main(argv):
 
     polymorphs = read_polymorphs(open(argv[1]))
     snp_d = SNPDict(open(argv[2]))    
-
     
+    process_gff(open(argv[3]), polymorphs, snp_d, samfile, fo, fo2, min_reads=MIN_READS)
+    fo2.close()
+    fo.close()
+    
+    
+    
+    return None
     for gffline in open(argv[3]):
         gffline = gffline.split('\t')
         # print gffline
@@ -118,23 +244,10 @@ def main(argv):
                 else:
                     snp_fracs.append(None)
                 
-                # ratio = snpbase/refbase
-                if len(basecount) == 0:
-                    comment.append('not-supported-%i' % i)
-                elif len(basecount) == 1:
-                    if (snpline.refbase in basecount) or \
-                            (snpline.mutation in basecount):
-                        comment.append('unique-snp-%i' % i)
-                    else:
-                        comment.append('weird-unique-snp-%i' % i)
-                elif len(basecount) == 2:
-                    if (snpline.refbase in basecount) or \
-                            (snpline.mutation in basecount):
-                        comment.append('undecided-snp-%i' % i)
-                    else:
-                        comment.append('weird-multisnp-%i' % i)
-                else:
-                    comment.append('multisnp-%i-%i' % (len(basecount), i))
+                cur_comment = classify_position_from_basecount(basecount, 
+                                                               snpline.refbase, 
+                                                               snpline.mutation, i)
+                comment.append(cur_comment)
 
                 if len(basecount) == 0:
                     pass
