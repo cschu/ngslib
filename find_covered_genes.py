@@ -189,11 +189,7 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
         
         if len(snps) > 0:
             classes, fracs, covered, counts = process_snps(snps, snp_d,
-                                                           contig, samfile)
-            undecided = len(snps) - sum(counts[:1])
-            n = len(fracs)
-            mean_fr_ref = sum([x[0] for x in fracs if not x is None]) / n
-            mean_fr_snp = sum([x[1] for x in fracs if not x is None]) / n
+                                                           contig, samfile)            
             
             fr_ref, fr_mut = 'NaN', 'NaN'
             if counts[4] != 0.0:
@@ -205,7 +201,7 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
                 data.set_range(keys=COL_HEADERS[5:8], values=[counts[4], len(snps), len(covered)])
                 data.set_range(keys=['#support_ref', '#support_mut', '#valid_reads', '#bad'], values=counts[2:])
                 data.set_range(keys=['fr_ref', 'fr_mut', 'call'], values=[fr_ref, fr_mut, call_snp(fr_ref, fr_mut)])
-                data.set('#undecided', counts[4] - (fr_ref + fr_mut))
+                data.set('#undecided', counts[4] - (counts[2] + counts[3]))
                 data.set('comment', '|'.join(classes))
                 
                 """
@@ -221,7 +217,7 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
                 outstr = data.get_string(sep='\t')
                 if not header:
                     header = True
-                    fo.write(data.get_headerstring(sep='\t'))
+                    fo.write('%s\n' % data.get_headerstring(sep='\t'))
                 fo.write('%s\n' % outstr)
                 fo2.write('%s\n' % outstr)
                 for read in reads:
