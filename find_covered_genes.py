@@ -202,9 +202,10 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
                 data = DataLine()
                 data.set_range(keys=COL_HEADERS[:5], values=idstr)
                 data.set_range(keys=COL_HEADERS[5:8], values=[counts[4], len(snps), len(covered)])
-                data.set_range(keys=['#support_ref', '#support_mut', '#valid_reads', '#bad'], values=counts[2:])
-                data.set_range(keys=['fr_ref', 'fr_mut', 'call'], values=[fr_ref, fr_mut, call_snp(fr_ref, fr_mut)])
+                data.set_range(keys=['#support_ref', '#support_mut'], values=counts[2:4])
                 data.set('#undecided', counts[4] - (counts[2] + counts[3]))
+                data.set_range(keys=['#total_reads', '#bad'], values=counts[4:])
+                data.set_range(keys=['fr_ref', 'fr_mut', 'call'], values=[fr_ref, fr_mut, call_snp(fr_ref, fr_mut)])
                 data.set('comment', '|'.join(classes))
                 
                 """
