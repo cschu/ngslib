@@ -115,7 +115,7 @@ def classify_position_from_basecount(basecount, refbase, snpbase, index):
             comment = 'weird-multisnp-%i' % index
     else:
         comment = 'multisnp-%i-%i' % (len(basecount), index)
-    print basecount, comment    
+    print basecount, refbase, snpbase, comment    
     return comment
 
 #    
