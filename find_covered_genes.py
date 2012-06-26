@@ -116,7 +116,7 @@ def classify_position_from_basecount(basecount, refbase, snpbase, index):
             comment = 'weird-multisnp-%i' % index
     else:
         comment = 'multisnp-%i-%i' % (len(basecount), index)
-    print basecount, refbase, snpbase, comment
+    # print basecount, refbase, snpbase, comment
     basecount['bad'] = bad_count    
     return comment
 
@@ -233,7 +233,7 @@ def main(argv):
 
     samfile = pysam.Samfile(argv[0], 'rb')
     fo = sys.stdout
-    # fo = open('%s.covered_genes.csv' % argv[0].rstrip('.bam'), 'w')    
+    fo = open('%s.covered_genes.csv' % argv[0].rstrip('.bam'), 'w')    
     fo2 = open('%s.covered_genes_with_reads.csv' % argv[0].rstrip('.bam'), 'w')
 
     # fo.write('%s\n' % ','.join(COL_HEADERS))
