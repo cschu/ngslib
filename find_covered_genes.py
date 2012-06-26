@@ -99,7 +99,8 @@ def count_bases(samfile, contig, pos, cutoff=-5):
 
 #    
 def classify_position_from_basecount(basecount, refbase, snpbase, index):
-    
+    bad_count = basecount['bad']
+    del basecount['bad']
     comment = ''    
     if len(basecount) == 0:
         comment = 'not-supported-%i' % index
@@ -115,7 +116,8 @@ def classify_position_from_basecount(basecount, refbase, snpbase, index):
             comment = 'weird-multisnp-%i' % index
     else:
         comment = 'multisnp-%i-%i' % (len(basecount), index)
-    print basecount, refbase, snpbase, comment    
+    print basecount, refbase, snpbase, comment
+    basecount['bad'] = bad_count    
     return comment
 
 #    
