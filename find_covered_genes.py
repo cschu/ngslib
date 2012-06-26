@@ -222,8 +222,8 @@ def process_gff(open_gff, polymorphs, snp_d, samfile, fo, fo2, min_reads=10):
                 if not header:
                     header = True
                     fo.write(data.get_headerstring(sep='\t'))
-                fo.write(outstr)
-                fo2.write(outstr)
+                fo.write('%s\n' % outstr)
+                fo2.write('%s\n' % outstr)
                 for read in reads:
                     fo2.write('%s\n' % read)
     
