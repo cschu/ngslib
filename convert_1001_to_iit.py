@@ -11,8 +11,11 @@ from check_snps import read_snp_data
 def main(argv):
 
     snp_data = read_snp_data(open(argv[0]))
+    outfile = 'ped-0-snps.iit.txt'
+    if len(argv) >= 2:
+        outfile = argv[1]
 
-    fo = open('ped-0-snps.iit.txt', 'w')
+    fo = open(outfile, 'w')
 
     for snpline in sorted(snp_data.items()):
         snpline = snpline[1]
