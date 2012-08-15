@@ -40,11 +40,11 @@ def find_region(pos, regions):
     while low < high:
         mid = (low + high) // 2
         region = regions[mid]
-        if pos[0][-1] < region[0]:
+        if pos[0] < region[0]:
             # position is located on a chromosome/o-genome 
             # with lesser id than current region
             high = mid
-        elif pos[0][-1] > region[0]:
+        elif pos[0] > region[0]:
             # position is located on a chromosome/o-genome 
             # with higher id than current region
             low = mid + 1
@@ -65,18 +65,20 @@ def find_region(pos, regions):
 def remove_intragenic_snps(snp_d, intragenic_regions):
     for pos in snp_d:
         region = find_region(pos, intragenic_regions)
-        if region is None:
-            region = ['None']
-        print '%c %i' % pos, ' '.join(map(str, region))
+        #if region is None:
+        #    region = ['None']
+        # print '%c %i' % pos, ' '.join(map(str, region))
+	if region is None:
+            print pos, region
     
     return snp_d
 
 ###
 def main(argv):
 
-    samfile = pysam.Samfile(argv[0], 'rb')
+    # samfile = pysam.Samfile(argv[0], 'rb')
     fo = sys.stdout
-    fo = open('%s.covered_genes.csv' % argv[0].rstrip('.bam'), 'w')    
+    # fo = open('%s.covered_genes.csv' % argv[0].rstrip('.bam'), 'w')    
     # fo2 = open('%s.covered_genes_with_reads.csv' % argv[0].rstrip('.bam'), 'w')
     fo2=sys.stdout
 
@@ -84,9 +86,15 @@ def main(argv):
     
     # tair10_genes.gff
     intragenic_regions = gff_helpers.read_intragenic_regions(open(argv[1]))
+    intragenic_regions = sorted(intragenic_regions)
+
+    # print intragenic_regions[:10]
+    
     # ped-0-snps_no-indels.txt
     snp_d = SNPDict(open(argv[2]))  
+    # print snp_d.items()[:10]
     
+
     snp_d = remove_intragenic_snps(snp_d, intragenic_regions)
     
     
@@ -96,7 +104,7 @@ def main(argv):
     
     
     fo.close()
-    samfile.close()
+    # samfile.close()
     return None
 
 
