@@ -63,13 +63,10 @@ def find_region(pos, regions):
 
 ###
 def remove_intragenic_snps(snp_d, intragenic_regions):
-    for pos in snp_d:
-        region = find_region(pos, intragenic_regions)
-        #if region is None:
-        #    region = ['None']
-        # print '%c %i' % pos, ' '.join(map(str, region))
-	if region is None:
-            print pos, region
+    for pos in snp_d.keys():
+        region = find_region(pos, intragenic_regions)        
+        if not region is None:
+            del snp_d[pos]
     
     return snp_d
 
