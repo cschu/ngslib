@@ -22,7 +22,7 @@ def main(argv):
     
     ihits = []
     
-    reader = csv.reader(open(argv[1], 'rb'), delimiter=';')
+    reader = csv.reader(open(argv[0], 'rb'), delimiter=';')
     headers = None
     for row in reader:
         if headers is None:
