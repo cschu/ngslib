@@ -62,7 +62,9 @@ class SNPLine(object):
             ('quality', str(self.quality)), 
             ('supporting_reads', str(self.supporting_reads)),
             ('concordance', str(self.concordance)),
-            ('avg_align_overl_reads', str(self.avg_align_per_overl_reads))
+            ('avg_align_overl_reads', str(self.avg_align_per_overl_reads)),
+            ('refbase', self.refbase),
+            ('mutation', self.mutation)
             ]
         # 21-08-2012 was: ..., str(self.pos), str(self.pos), -> changed to UCSC format
         # according to http://code.google.com/p/bedtools/wiki/Usage#intersectBed

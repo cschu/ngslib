@@ -21,6 +21,17 @@ def read_polymorphs(open_gff):
         polymorphs[gene_id] = polymorphs.get(gene_id, []) + [snp]
     return polymorphs
 
+#
+def read_snp_from_gff(open_gff):
+    snps = []
+    for gffline in open_gff:
+        gffline = gffline.strip().split('\t')
+        comments = parse_gff_comments(gffline[8])
+        snp = (gffline[0], int(gffline[3] + 1), int(gffline[4]), comments['refbase'], comments['mutation'])
+        snps.append(snp)
+    return snps
+
+
 def read_intragenic_regions(open_gff):
     i_regions = []
     for gffline in open_gff:
