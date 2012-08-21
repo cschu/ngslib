@@ -24,7 +24,7 @@ class IntergenicHit(object):
 def main(argv):
     
     obj_headers = ['contig', 'pos', 'colbase', 'pedbase', 'total_reads', 'support_ped', 'fr_ped', 'support_col', 'fr_col']
-    casts = [str, int, str, str, int, int, float, int, float]
+    casts = [str, int, str, str, float, float, float, float, float]
     
     reader = csv.reader(open(argv[0], 'rb'), delimiter=';')
     writer = csv.writer(open(argv[0].replace('.csv', '.filtered.csv'), 'wb'), delimiter=';', quotechar='"')
