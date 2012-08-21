@@ -14,6 +14,7 @@ class IntergenicHit(object):
     def __init__(self, fields, values):
         for field, value in zip(fields, values):
             setattr(self, field, value)            
+        # print self.__dict__
         pass
     def is_valid(self, min_reads=3):
         return self.total_reads > min_reads
