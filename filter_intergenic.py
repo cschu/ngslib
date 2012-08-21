@@ -16,7 +16,7 @@ class IntergenicHit(object):
             setattr(self, field, cast(value))            
         pass
     def is_valid(self, min_reads=3):
-        return self.total_reads > min_reads
+        return self.total_reads >= min_reads
     pass
     
 
