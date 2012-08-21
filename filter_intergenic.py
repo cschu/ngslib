@@ -11,8 +11,8 @@ import csv
 
 
 class IntergenicHit(object):
-    def __init__(self, fields, values):
-        for field, value in zip(fields, values):
+    def __init__(self, fields, values, casts):
+        for field, value, cast in zip(fields, values, casts):
             setattr(self, field, value)            
         # print self.__dict__
         pass
@@ -25,6 +25,7 @@ class IntergenicHit(object):
 def main(argv):
     
     obj_headers = ['contig', 'pos', 'colbase', 'pedbase', 'total_reads', 'support_ped', 'fr_ped', 'support_col', 'fr_col']
+    casts = [str, int, str, str, int, int, float, int, float]
     
     reader = csv.reader(open(argv[0], 'rb'), delimiter=';')
     writer = csv.writer(open(argv[0].replace('.csv', '.filtered.csv'), 'wb'), delimiter=';', quotechar='"')
@@ -34,7 +35,7 @@ def main(argv):
             headers = row
             writer.writerow(headers)
         else:
-            ihit = IntergenicHit(obj_headers, row)
+            ihit = IntergenicHit(obj_headers, row, casts)
             if ihit.is_valid():
                 # ihits.append(ihit)
                 writer.writerow(row)
