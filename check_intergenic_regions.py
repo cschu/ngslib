@@ -137,7 +137,10 @@ def main2(argv):
         if total_reads > 0:
             
             # line = str(snpline).split('\t')[1:5]
-            line = [snp_id[0], snp_id[1], snp_id[2], snp_id[3]]            
+            
+            # snp = (gffline[0], int(gffline[3] + 1), int(gffline[4]), comments['refbase'], comments['mutation'])
+            
+            line = [snp_id[0], snp_id[1], snp_id[3], snp_id[4]]            
             
             line.extend([total_reads, 
                          snpbase, float(snpbase)/total_reads,
