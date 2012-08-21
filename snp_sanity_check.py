@@ -13,9 +13,13 @@ def get_gffstring(contig, pos):
 
 def main(argv):
     
+    header = None
     for line in open(argv[0]):
-        line = line.split(';')
-        print get_gffstring('Chr%c' % line[0], line[1])
+        if header is None:
+            header = line
+        else:
+            line = line.split(';')
+            print get_gffstring('Chr%c' % line[0], line[1])
     
     
     
