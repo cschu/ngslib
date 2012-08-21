@@ -20,7 +20,7 @@ def main(argv):
         
         if col.pos == 4880:                                              
             for read in col.pileups:
-                print read.alignment.tags['RG']
+                print dict(read.alignment.tags)['RG']
     
     samfile.close()
             
