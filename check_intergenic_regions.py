@@ -108,6 +108,7 @@ def main2(argv):
 
     # fo.write('%s\n' % ','.join(COL_HEADERS))
     
+    """
     # tair10_genes.gff
     intragenic_regions = gff_helpers.read_intragenic_regions(open(argv[1]))
     intragenic_regions = sorted(intragenic_regions)
@@ -117,22 +118,27 @@ def main2(argv):
     snp_d = SNPDict(open(argv[2]))  
     # print snp_d.items()[:10]
     snp_d = remove_intragenic_snps(snp_d, intragenic_regions)
+    """
+    snps = gff_helpers.read_snp_from_gff(open(argv[1]))
     
     count_snps = 0
     print ';'.join(['contig', 'position', 'refbase_(Col)', 'mutation_(Ped)', 'total_reads', 
                     '#support_Ped', 'fr_Ped', '#support_Col', 'fr_Col'])
     
-    for snp_id, snpline in sorted(snp_d.items()):        
+    # for snp_id, snpline in sorted(snp_d.items()):
+    for snp_id in snps:        
         basecount = FIND_GENES.count_bases(samfile, snp_id[0], snp_id[1])
     
-        refbase = basecount.get(snpline.refbase, 0.0)
-        snpbase = basecount.get(snpline.mutation, 0.0)
+        refbase = basecount.get(snp_id[2], 0.0)
+        snpbase = basecount.get(snp_id[3], 0.0)
         
         total_reads = sum(basecount.values()) - basecount['bad']
         
         if total_reads > 0:
             
-            line = str(snpline).split('\t')[1:5]
+            # line = str(snpline).split('\t')[1:5]
+            line = [snp_id[0], snp_id[1], snp_id[2], snp_id[3]]            
+            
             line.extend([total_reads, 
                          snpbase, float(snpbase)/total_reads,
                          refbase, float(refbase)/total_reads])
