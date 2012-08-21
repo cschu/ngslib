@@ -64,8 +64,10 @@ class SNPLine(object):
             ('concordance', str(self.concordance)),
             ('avg_align_overl_reads', str(self.avg_align_per_overl_reads))
             ]
+        # 21-08-2012 was: ..., str(self.pos), str(self.pos), -> changed to UCSC format
+        # according to http://code.google.com/p/bedtools/wiki/Usage#intersectBed
         fields = [self.seqid, '.', self.type_, 
-                  str(self.pos), str(self.pos), '.', '.', '.',
+                  str(self.pos - 1), str(self.pos), '.', '.', '.',
                   ';'.join(['%s=%s' % attr for attr in attributes])]
         return '\t'.join(fields)
 
