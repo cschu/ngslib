@@ -26,7 +26,8 @@ class CodingDictionary(dict):
         pass
     def query_position(self, source, pos, state):
         if source in self and pos in self[source]:
-            return (self[source][pos] | state) != 0
+            #return (self[source][pos] | state) != 0
+            return (self[source][pos] & state) != 0 # QUESTION: WHICH RESULTS/METHODS DEPEND ON DATA CREATED WITH "|" ?
         return False
     pass
 
