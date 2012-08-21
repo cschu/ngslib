@@ -7,7 +7,11 @@ Created on Aug 15, 2012
 '''
 import sys
 
-import pysam
+try:
+    import pysam
+except:
+   pass
+
 
 from snptools import SNPDict
 import gff_helpers
@@ -76,11 +80,18 @@ def remove_intragenic_snps(snp_d, intragenic_regions):
 def main2(argv):
     intragenic_regions = gff_helpers.read_intragenic_regions(open('tair10_genes.gff'))
     intragenic_regions = sorted(intragenic_regions)
+    
+    x = find_region(('Chr3', 16092855), intragenic_regions)
+    print x
+    
     snp_d = SNPDict(open('ped-0-snps_no-indels.txt'))
     snp_d = remove_intragenic_snps(snp_d, intragenic_regions)
-    for k, v in sorted(snp_d.items()):
-        print k, v
-    pass
+    
+    print ('Chr3', 16092855) in snp_d
+    
+    #for k, v in sorted(snp_d.items()):
+    #    print k, v
+    #pass
 
 ###
 def main(argv):
