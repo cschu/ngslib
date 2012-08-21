@@ -32,35 +32,55 @@ def find_region(pos, regions):
     while low < high:
         mid = (low + high) // 2
         region = regions[mid]
+        # print pos, region, low, high,
         if pos[0] < region[0]:
+            #print 'RULE 1'
             # position is located on a contig 
             # with lesser id than current region
             high = mid
         elif pos[0] > region[0]:
+            #print 'RULE 2'
             # position is located on a contig 
             # with higher id than current region
             low = mid + 1
         else:
             # position is located on same contig as region ...
-            if pos[1] < region[2]:
+            if pos[1] < region[1]:
+                #print 'RULE 3'
                 # ... but upstream of region
                 high = mid
-            elif pos[1] > region[3]:
+            elif pos[1] > region[2]:
+                #print 'RULE 4'
                 # ... but downstream of region
                 low = mid + 1
             else:
+                #print 'RULE 5'
                 # and is also located within region
                 return region
+    #print 'RULE 6'
     return None
 
 ###
 def remove_intragenic_snps(snp_d, intragenic_regions):
-    for pos in snp_d.keys():
+    for pos in sorted(snp_d.keys()):
+        #pos = ('Chr1', 5936)
         region = find_region(pos, intragenic_regions)        
         if not region is None:
+            # print 'REMOVING', pos, snp_d[pos], region
             del snp_d[pos]
+        #sys.exit()
+        
     
     return snp_d
+
+def main2(argv):
+    intragenic_regions = gff_helpers.read_intragenic_regions(open('tair10_genes.gff'))
+    intragenic_regions = sorted(intragenic_regions)
+    snp_d = SNPDict(open('ped-0-snps_no-indels.txt'))
+    snp_d = remove_intragenic_snps(snp_d, intragenic_regions)
+    for k, v in sorted(snp_d.items()):
+        print k, v
+    pass
 
 ###
 def main(argv):
