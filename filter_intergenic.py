@@ -13,7 +13,7 @@ import csv
 class IntergenicHit(object):
     def __init__(self, fields, values, casts):
         for field, value, cast in zip(fields, values, casts):
-            setattr(self, field, value)            
+            setattr(self, field, cast(value))            
         pass
     def is_valid(self, min_reads=3):
         return self.total_reads > min_reads
