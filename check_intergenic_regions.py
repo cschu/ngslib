@@ -36,32 +36,32 @@ def find_region(pos, regions):
     while low < high:
         mid = (low + high) // 2
         region = regions[mid]
-        # print pos, region, low, high,
+        print pos, region, low, high,
         if pos[0] < region[0]:
-            #print 'RULE 1'
+            print 'RULE 1'
             # position is located on a contig 
             # with lesser id than current region
             high = mid
         elif pos[0] > region[0]:
-            #print 'RULE 2'
+            print 'RULE 2'
             # position is located on a contig 
             # with higher id than current region
             low = mid + 1
         else:
             # position is located on same contig as region ...
             if pos[1] < region[1]:
-                #print 'RULE 3'
+                print 'RULE 3'
                 # ... but upstream of region
                 high = mid
             elif pos[1] > region[2]:
-                #print 'RULE 4'
+                print 'RULE 4'
                 # ... but downstream of region
                 low = mid + 1
             else:
-                #print 'RULE 5'
+                print 'RULE 5'
                 # and is also located within region
                 return region
-    #print 'RULE 6'
+    print 'RULE 6'
     return None
 
 ###
@@ -77,24 +77,28 @@ def remove_intragenic_snps(snp_d, intragenic_regions):
     
     return snp_d
 
-def main2(argv):
+def main(argv):
     intragenic_regions = gff_helpers.read_intragenic_regions(open('tair10_genes.gff'))
     intragenic_regions = sorted(intragenic_regions)
     
-    x = find_region(('Chr3', 16092855), intragenic_regions)
+    # x = find_region(('Chr3', 16092855), intragenic_regions)
+    # print x
+    
+    x = find_region(('Chr1', 26179018), intragenic_regions)
     print x
     
-    snp_d = SNPDict(open('ped-0-snps_no-indels.txt'))
-    snp_d = remove_intragenic_snps(snp_d, intragenic_regions)
+    #snp_d = SNPDict(open('ped-0-snps_no-indels.txt'))
+    #snp_d = remove_intragenic_snps(snp_d, intragenic_regions)
     
-    print ('Chr3', 16092855) in snp_d
+    #print ('Chr3', 16092855) in snp_d
+    #print ('Chr1', 26179018) in snp_d
     
     #for k, v in sorted(snp_d.items()):
     #    print k, v
     #pass
 
 ###
-def main(argv):
+def main2(argv):
 
     samfile = pysam.Samfile(argv[0], 'rb')
     fo = sys.stdout
