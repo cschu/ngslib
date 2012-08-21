@@ -4,7 +4,10 @@ import os
 import sys
 import math
 
-import pysam
+try:
+    import pysam
+except:
+    pass
 
 from snptools import SNPDict
 import gff_helpers

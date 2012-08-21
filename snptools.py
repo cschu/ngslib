@@ -30,9 +30,21 @@ class SNPLine(object):
         self.type_ = 'snp'
         self.pos = int(line[2])
         self.quality = int(line[5])
-        self.supporting_reads = int(line[6])
-        self.concordance = float(line[7])
-        self.avg_align_per_overl_reads = float(line[8])
+        try:
+            self.supporting_reads = int(line[6])
+        except:
+            #print 'lineproblem:', line
+            #sys.exit()
+            self.supporting_reads = -1
+            pass
+        try:
+            self.concordance = float(line[7])
+        except:
+            self.concordance = -1.0
+        try:
+            self.avg_align_per_overl_reads = float(line[8])
+        except:
+            self.avg_align_per_overl_reads = -1.0
         self.lineid = lineid
         self.refbase = line[3]
         self.mutation = line[4]
