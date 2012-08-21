@@ -33,6 +33,8 @@ def main(argv):
         if headers is None:
             headers = row
             writer.writerow(headers)
+        elif row[0][0] == '#':
+            writer.writerow(row)
         else:
             ihit = IntergenicHit(obj_headers, row, casts)
             if ihit.is_valid():
