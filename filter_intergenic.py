@@ -17,7 +17,7 @@ class IntergenicHit(object):
         # print self.__dict__
         pass
     def is_valid(self, min_reads=3):
-        print self.__dict__
+        # print self.__dict__
         return self.total_reads > min_reads
     pass
     
