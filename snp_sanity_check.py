@@ -17,6 +17,8 @@ def main(argv):
     for line in open(argv[0]):
         if header is None:
             header = line
+        elif line.startswith('#'):
+            continue
         else:
             line = line.split(';')
             print get_gffstring('Chr%c' % line[0], line[1])
