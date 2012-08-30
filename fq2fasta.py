@@ -9,10 +9,10 @@ import sys
 def fq2fasta(fq_in, fas_out=sys.stdout):
     while True:
         try:
-            header = fq_in.readline()
-            seq = fq_in.readline()
-            dummy = fq_in.readline()
-            qual = fq_in.readline()
+            header = fq_in.readline().strip().split()[0]
+            seq = fq_in.readline().strip()
+            dummy = fq_in.readline().strip()
+            qual = fq_in.readline().strip()
         except:
             break
         out_str = '>%s|%s\n%s\n' % (header, qual, seq)
