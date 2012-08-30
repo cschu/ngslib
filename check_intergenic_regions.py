@@ -77,7 +77,7 @@ def remove_intragenic_snps(snp_d, intragenic_regions):
     
     return snp_d
 
-def main(argv):
+def main2(argv):
     intragenic_regions = gff_helpers.read_intragenic_regions(open('tair10_genes.gff'))
     intragenic_regions = sorted(intragenic_regions)
     
@@ -98,7 +98,7 @@ def main(argv):
     #pass
 
 ###
-def main2(argv):
+def main(argv):
 
     samfile = pysam.Samfile(argv[0], 'rb')
     fo = sys.stdout
@@ -126,8 +126,10 @@ def main2(argv):
                     '#support_Ped', 'fr_Ped', '#support_Col', 'fr_Col'])
     
     # for snp_id, snpline in sorted(snp_d.items()):
+    reads_out = open('READS_CHECK.dat', 'wb')
     for snp_id in snps:        
-        basecount = FIND_GENES.count_bases(samfile, snp_id[0], snp_id[1])
+        # snp_id[1] - 1 because pysam pileup is 0-based
+        basecount = FIND_GENES.count_bases(samfile, snp_id[0], snp_id[1] - 1, reads_out) 
     
         refbase = basecount.get(snp_id[3], 0.0)
         snpbase = basecount.get(snp_id[4], 0.0)
@@ -137,7 +139,6 @@ def main2(argv):
         if total_reads > 0:
             
             # line = str(snpline).split('\t')[1:5]
-            
             # snp = (gffline[0], int(gffline[3] + 1), int(gffline[4]), comments['refbase'], comments['mutation'])
             
             line = [snp_id[0], snp_id[1], snp_id[3], snp_id[4]]            
@@ -150,7 +151,9 @@ def main2(argv):
             # print snpline, 'x', total_reads, snpbase, float(snpbase)/total_reads,
             # print refbase, float(refbase)/total_reads 
             count_snps += 1
-    print '# Total SNPs: %i Covered: %i (%.3f)' % (len(snp_d), count_snps, float(count_snps)/len(snp_d)) 
+    reads_out.close()
+    #print '# Total SNPs: %i Covered: %i (%.3f)' % (len(snp_d), count_snps, float(count_snps)/len(snp_d)) 
+    print '# Total SNPs: %i Covered: %i (%.3f)' % (len(snps), count_snps, float(count_snps)/len(snps)) 
     
     # tair10_genes.gff
     # process_gff(open(argv[3]), polymorphs, snp_d, samfile, fo, fo2, min_reads=MIN_NREADS)

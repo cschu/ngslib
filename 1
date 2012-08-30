@@ -16,7 +16,7 @@ class IntergenicHit(object):
             setattr(self, field, cast(value))            
         pass
     def is_valid(self, min_reads=3):
-        return self.total_reads >= min_reads
+        return self.total_reads > min_reads
     pass
     
 
@@ -24,7 +24,7 @@ class IntergenicHit(object):
 def main(argv):
     
     obj_headers = ['contig', 'pos', 'colbase', 'pedbase', 'total_reads', 'support_ped', 'fr_ped', 'support_col', 'fr_col']
-    casts = [str, int, str, str, float, float, float, float, float]
+    casts = [str, int, str, str, int, int, float, int, float]
     
     reader = csv.reader(open(argv[0], 'rb'), delimiter=';')
     writer = csv.writer(open(argv[0].replace('.csv', '.filtered.csv'), 'wb'), delimiter=';', quotechar='"')
