@@ -129,8 +129,8 @@ def main2(argv):
     for snp_id in snps:        
         basecount = FIND_GENES.count_bases(samfile, snp_id[0], snp_id[1])
     
-        refbase = basecount.get(snp_id[2], 0.0)
-        snpbase = basecount.get(snp_id[3], 0.0)
+        refbase = basecount.get(snp_id[3], 0.0)
+        snpbase = basecount.get(snp_id[4], 0.0)
         
         total_reads = sum(basecount.values()) - basecount['bad']
         
