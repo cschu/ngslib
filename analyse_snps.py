@@ -12,11 +12,13 @@ import pysam
 def count_bases(col, cutoff=-5, mult_counts=None):
     counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 'low_qual': 0, 'del': 0}    
     bad_reads = []
+    unique_reads = set([])
     
     for read in col.pileups:
         qname = read.alignment.qname
+        unique_reads.add(qname)
         try:
-            divisor = float(mult_counts[qname])
+            divisor = mult_counts[qname]
         except:
             divisor = 1.0
         increment = 1 / divisor
@@ -38,6 +40,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     # counts['bad'] = len(bad_reads)
     counts['T'] += counts['U']
     del counts['U']
+    counts['unique_reads'] = len(unique_reads)
     return counts #, bad_reads
 
 
@@ -71,7 +74,8 @@ def analyse_snps(bamfile, snpfile_open, hit_mode, mult_counts=None, out=sys.stdo
     
         if base_count is not None:            
             out = [None, end, 
-                   sum(base_count.values()),
+                   #sum(base_count.values()),
+                   base_count['unique_reads'],
                    base_count[attributes['refbase']],
                    base_count[attributes['mutation']],
                    base_count['N'],
