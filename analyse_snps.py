@@ -9,25 +9,35 @@ import re
 
 import pysam
 
-def count_bases(col, cutoff=-5):
+def count_bases(col, cutoff=-5, mult_counts=None):
     counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 'low_qual': 0, 'del': 0}    
     bad_reads = []
     
+    
+    
+    
     for read in col.pileups:
         if read.is_del == 0:
+            qname = read.alignment.qname
+            try:
+                divisor = float(mult_counts[qname])
+            except:
+                divisor = 1.0
+            increment = 1 / divisor
+                
             base = read.alignment.seq[read.qpos]
             qual = ord(read.alignment.qual[read.qpos]) - 33
             if qual > cutoff and base != 'N':
-                counts[base] += 1
+                counts[base] += increment
             elif qual > cutoff:            
-                bad_reads.append(('N', read.alignment.qname))
-                counts['N'] += 1
+                bad_reads.append(('N', qname))
+                counts['N'] += increment
             else:
-                bad_reads.append(('low_qual', read.alignment.qname))
-                counts['low_qual'] += 1
+                bad_reads.append(('low_qual', qname))
+                counts['low_qual'] += increment
         else:
-            bad_reads.append(('del', read.alignment.qname))
-            counts['del'] += 1
+            bad_reads.append(('del', qname))
+            counts['del'] += increment
     # counts['bad'] = len(bad_reads)
     counts['T'] += counts['U']
     del counts['U']
@@ -35,7 +45,7 @@ def count_bases(col, cutoff=-5):
 
 
 
-def analyse_snps(bamfile, snpfile_open, hit_mode, out=sys.stdout):
+def analyse_snps(bamfile, snpfile_open, hit_mode, mult_counts=None, out=sys.stdout):
     header = ['', 'Pos_SNP', '#Reads', '#Reads_Col', '#Reads_Ped', 
               '#Reads_N', '#Reads_lowqual', '#Reads_del', '#Reads_other']
     if hit_mode == 'intra':
@@ -60,7 +70,7 @@ def analyse_snps(bamfile, snpfile_open, hit_mode, out=sys.stdout):
         base_count = None
         for col in bamfile.pileup(region=region):
             if start == col.pos:
-                base_count = count_bases(col) 
+                base_count = count_bases(col, mult_counts=mult_counts) 
     
         if base_count is not None:            
             out = [None, end, 
@@ -93,9 +103,17 @@ def main(argv):
     
     snp_fn = argv[0]
     hit_mode = argv[1]
-    bam_fn = snp_fn[:snp_fn.find('_')] + '.bam'
+    multi_hits = 'mult' in argv[2:]
     
-    analyse_snps(pysam.Samfile(bam_fn, 'rb'), open(snp_fn, 'rb'), hit_mode, out=sys.stdout)
+    bam_fn = snp_fn[:snp_fn.find('_')] + '.bam'
+    mult_counts = None
+    if multi_hits:
+        items = [line.strip().split('\t') 
+                 for line in open(bam_fn + 'mult_counts', 'rb').readlines()]
+        mult_counts = dict([tuple(item[0], int(item[1])) for item in items])
+        pass
+    
+    analyse_snps(pysam.Samfile(bam_fn, 'rb'), open(snp_fn, 'rb'), hit_mode, mult_counts=mult_counts, out=sys.stdout)
     pass
 
 if __name__ == '__main__': main(sys.argv[1:])
