@@ -74,7 +74,7 @@ def analyse_snps(bamfile, snpfile_open, hit_mode, mult_counts=None, out=sys.stdo
     
         if base_count is not None:            
             out = [None, end, 
-                   sum(base_count.values()),
+                   sum(base_count.values()) - base_count['unique_reads'],
                    # base_count['unique_reads'],
                    base_count[attributes['refbase']],
                    base_count[attributes['mutation']],
