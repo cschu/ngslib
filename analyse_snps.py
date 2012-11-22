@@ -109,7 +109,7 @@ def main(argv):
     mult_counts = None
     if multi_hits:
         items = [line.strip().split('\t') 
-                 for line in open(bam_fn + 'mult_counts', 'rb').readlines()]
+                 for line in open(bam_fn + '.mult_counts', 'rb').readlines()]
         mult_counts = dict([tuple(item[0], int(item[1])) for item in items])
         pass
     
