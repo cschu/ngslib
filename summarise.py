@@ -106,8 +106,10 @@ def main(argv):
     multi_hits = (argv[1] == 'mult') 
     if multi_hits:    
         args = argv[2:]
+        cast = float
     else:
         args = argv[1:]
+        cast = int
          
     genes = {}    
     sampleIDs = set()
@@ -130,7 +132,7 @@ def main(argv):
             gene = genes[line[0]]                        
             if snp_pos not in gene:
                 gene[snp_pos] = AthSNP(snp_pos)            
-            gene[snp_pos].add_readcount(sampleID, map(int, line[2:]))
+            gene[snp_pos].add_readcount(sampleID, map(cast, line[2:]))
 
     sampleIDs = sorted(list(sampleIDs))               
     count_mask = ['#Reads_Col', '#Reads_Ped', '#Reads']
