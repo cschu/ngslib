@@ -15,13 +15,13 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     
     for read in col.pileups:
         qname = read.alignment.qname
-        if read.is_del == 0:            
-            try:
-                divisor = float(mult_counts[qname])
-            except:
-                divisor = 1.0
-            increment = 1 / divisor
-                
+        try:
+            divisor = float(mult_counts[qname])
+        except:
+            divisor = 1.0
+        increment = 1 / divisor
+        
+        if read.is_del == 0:    
             base = read.alignment.seq[read.qpos]
             qual = ord(read.alignment.qual[read.qpos]) - 33
             if qual > cutoff and base != 'N':
