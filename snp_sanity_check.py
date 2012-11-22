@@ -15,13 +15,14 @@ def main(argv):
     
     header = None
     for line in open(argv[0]):
+        # print line
         if header is None:
             header = line
         elif line.startswith('#'):
             continue
         else:
             line = line.split(';')
-            print get_gffstring('Chr%c' % line[0], line[1])
+            print get_gffstring('Chr%c' % line[0][-1], line[1])
     
     
     

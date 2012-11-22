@@ -27,7 +27,7 @@ def read_snp_from_gff(open_gff):
     for gffline in open_gff:
         gffline = gffline.strip().split('\t')
         comments = parse_gff_comments(gffline[8])
-        snp = (gffline[0], int(gffline[3] + 1), int(gffline[4]), comments['refbase'], comments['mutation'])
+        snp = (gffline[0], int(gffline[3]) + 1, int(gffline[4]), comments['refbase'], comments['mutation'])
         snps.append(snp)
     return snps
 

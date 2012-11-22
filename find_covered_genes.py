@@ -74,19 +74,32 @@ def call_snp_interval(fr_ref, guards=INTERVAL_GUARDS):
 def check_nomapping(read):
     return 'nomapping' in dict(read.tags).get('RG', '') 
 
-def count_bases(samfile, contig, pos, cutoff=-5):
+def count_bases(samfile, contig, pos, reads_out, cutoff=-5):
     counts = {'bad': 0, 'nomap': 0}
     # print 'COUNT_BASES:', contig, pos, pos+1
     
     """for col in samfile.pileup(contig, start=pos, end=pos+1):
         print col
     """
-    for col in samfile.pileup(contig, start=pos, end=pos+1, stepper='all'):
+    
+    #for col in samfile.pileup(contig, start=pos, end=pos+1, stepper='all'):
+    region='%s:%i:%i' % (contig, pos, pos + 1)
+    sys.stderr.write('REGION: %s\n' % str(region))
+    for col in samfile.pileup(region=region):
         
         if col.pos == pos:
             readcount = 0                                    
             for read in col.pileups:
+                
+                tags = dict(read.alignment.tags) 
+                if 'mult' in tags['RG']:
+                    continue
+                
                 readcount += 1
+                reads_out.write('%s ' % str(read))
+                reads_out.write('%s %s\n' % (contig, str(pos)))
+                
+                
                 #if check_nomapping(read):
                 #    counts['nomap'] = counts.get('nomap', 0) + 1
                 #elif read.is_del == 0:
