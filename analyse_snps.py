@@ -13,12 +13,9 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 'low_qual': 0, 'del': 0}    
     bad_reads = []
     
-    
-    
-    
     for read in col.pileups:
-        if read.is_del == 0:
-            qname = read.alignment.qname
+        qname = read.alignment.qname
+        if read.is_del == 0:            
             try:
                 divisor = float(mult_counts[qname])
             except:
