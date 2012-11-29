@@ -11,6 +11,8 @@ import pysam
 
 
 def get_increment(mult_counts, qname):
+    if '_' in qname:
+        qname = qname[:qname.rfind('_')]
     try:
         return 1.0 / mult_counts[qname]
     except:
@@ -19,9 +21,12 @@ def get_increment(mult_counts, qname):
 
 def find_unique_mate_pairs(reads):
     
-    first = [read for read in reads if read.alignment.flag & 0x40]
+    first = [read for read in reads 
+             if (read.alignment.flag & 0x40 or read.alignment.flag & 0x1 == 0)]
     second = [read for read in reads if read.alignment.flag & 0x80]
-    
+    # print first
+    # print second
+
     unique_pairs = []
     for k, read1 in enumerate(first):
         ra1 = read1.alignment
@@ -53,25 +58,37 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     
     reads = {}
     # get all mates and multimappings
+    count_ = 0
     for read in col.pileups:
+        count_ += 1
+        if read.alignment.flag & 0x40:
+            print 'xx'
+        print 'dINC', get_increment(mult_counts, read.alignment.qname)
         unique_reads.add(read.alignment.qname)        
         if read.is_del == 0:
             reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
+            
         else:
             bad_reads.append(('del', read.alignment.qname))
             weighted['del'] += get_increment(mult_counts, read.alignment.qname)
             counts['del'] += 1
-            
+    print reads
+    print count_
+        
     # sort out the multimappings in paired-end reads
     if mult_counts is not None:
+        # print 'XXX'
         tmp_reads = []    
         for qname in reads:
             tmp_reads += find_unique_mate_pairs(reads[qname]) 
             pass
         reads = dict(tmp_reads)
+    print reads
     
     # check positions        
     for qname, pair in reads.items():
+        print 'INC', get_increment(mult_counts, qname)
+        
         base1, base2 = pair[0].alignment.seq[pair[0].qpos], None
         qual1, qual2 = ord(pair[0].alignment.qual[pair[0].qpos]) - 33, None
         if len(pair) == 1:
@@ -108,6 +125,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             bad_reads.append(('N', qname))
             weighted['N'] += get_increment(mult_counts, qname)  
             counts['N'] += 1
+        print counts
         pass
     
     counts['T'] += counts['U']
@@ -116,6 +134,10 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     del weighted['U']
     
     counts['unique_reads'] = len(unique_reads)
+
+    print counts
+    print weighted
+
     return counts, weighted
         
         
