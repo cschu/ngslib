@@ -87,12 +87,13 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             tmp_reads += find_unique_mate_pairs(reads[qname]) 
             pass
         reads = dict(tmp_reads)
-    print reads
+    # print reads
     
     # check positions        
     for qname, pair in reads.items():
         print 'INC', get_increment(mult_counts, qname)
-        
+        print qname, pair, len(pair)
+
         base1, base2 = pair[0].alignment.seq[pair[0].qpos], None
         qual1, qual2 = ord(pair[0].alignment.qual[pair[0].qpos]) - 33, None
         isdel1, isdel2 = pair[0].is_del == 1, None 
