@@ -91,28 +91,28 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     
     # check positions        
     for qname, pair in reads.items():
-        print 'INC', get_increment(mult_counts, qname)
-        print qname, pair, len(pair)
+        # print 'INC', get_increment(mult_counts, qname)
+        # print qname, pair, len(pair)
 
         base1, base2 = pair[0].alignment.seq[pair[0].qpos], None
         qual1, qual2 = ord(pair[0].alignment.qual[pair[0].qpos]) - 33, None
         isdel1, isdel2 = pair[0].is_del == 1, None 
         
         if len(pair) == 1:
-            base, qual = base1, qual1
+            base, qual, isdel = base1, qual1, isdel1
         else:
             base2 = pair[1].alignment.seq[pair[1].qpos]
             qual2 = ord(pair[1].alignment.qual[pair[1].qpos]) - 33
             isdel2 = pair[1].is_del == 1
             
             if isdel1 and isdel2:
-                bad_reads.append(('del', pair[0].alignment.qname))
-                weighted['del'] += get_increment(mult_counts, pair[0].alignment.qname)
+                bad_reads.append(('del', qname))
+                weighted['del'] += get_increment(mult_counts, qname)
                 counts['del'] += 1
             elif isdel1:
-                base, qual = base2, qual2
+                base, qual, isdel = base2, qual2, False
             elif isdel2:
-                base, qual = base1, qual1
+                base, qual, isdel = base1, qual1, False
             else:
                 if base1 == base2:
                     # mates agree => check base  
@@ -131,8 +131,11 @@ def count_bases(col, cutoff=-5, mult_counts=None):
                 #    # mates disagree with mate2 having higher quality
                 #    base, qual = base2, qual2
             
-        
-        if qual > cutoff and base != 'N':
+        if isdel:
+            bad_reads.append(('del', qname))
+            weighted['del'] += get_increment(mult_counts, qname)
+            counts['del'] += 1            
+        elif qual > cutoff and base != 'N':
             weighted[base] += get_increment(mult_counts, qname)
             counts[base] += 1
         elif qual < cutoff:
@@ -143,7 +146,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             bad_reads.append(('N', qname))
             weighted['N'] += get_increment(mult_counts, qname)  
             counts['N'] += 1
-        print counts
+        # print counts
         pass
     
     counts['T'] += counts['U']
@@ -153,8 +156,8 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     
     counts['unique_reads'] = len(unique_reads)
 
-    print counts
-    print weighted
+    # print counts
+    # print weighted
 
     return counts, weighted
         
