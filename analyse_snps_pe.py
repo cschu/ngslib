@@ -45,19 +45,22 @@ def find_unique_mate_pairs(reads):
 
 
 def count_bases(col, cutoff=-5, mult_counts=None):
-    counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 'low_qual': 0, 'del': 0, 'mates_disagree': 0}    
+    counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 
+              'low_qual': 0, 'del': 0, 'mates_disagree': 0}
+    weighted = dict([(k, 0) for k in counts])
     bad_reads = []
     unique_reads = set([])
     
     reads = {}
     # get all mates and multimappings
     for read in col.pileups:
-        unique_reads.add(read.alignment.qname)
+        unique_reads.add(read.alignment.qname)        
         if read.is_del == 0:
             reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
         else:
             bad_reads.append(('del', read.alignment.qname))
-            counts['del'] += get_increment(mult_counts, read.alignment.qname)
+            weighted['del'] += get_increment(mult_counts, read.alignment.qname)
+            counts['del'] += 1
             
     # sort out the multimappings in paired-end reads
     if mult_counts is not None:
@@ -83,8 +86,9 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             # elif qual1 == qual2:
             else:
                 # the mates do not agree at this position and have equal quality => discard read
-                counts['mates_disagree'] += get_increment(mult_counts, qname)  
-                bad_reads.append('mates_disagree', qname)
+                weighted['mates_disagree'] += get_increment(mult_counts, qname) 
+                counts['mates_disagree'] += 1
+                bad_reads.append(('mates_disagree', qname))
                 continue # <- important!
             # elif qual1 > qual2:
             #    # mates disagree with mate1 having higher quality
@@ -94,56 +98,29 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             #    base, qual = base2, qual2
             
         if qual > cutoff and base != 'N':
-            counts[base] += get_increment(mult_counts, qname)
+            weighted[base] += get_increment(mult_counts, qname)
+            counts[base] += 1
         elif qual < cutoff:
             bad_reads.append(('low_qual', qname))
-            counts['low_qual'] += get_increment(mult_counts, qname)
+            weighted['low_qual'] += get_increment(mult_counts, qname)
+            counts['low_qual'] += 1
         else:
             bad_reads.append(('N', qname))
-            counts['N'] += get_increment(mult_counts, qname)  
+            weighted['N'] += get_increment(mult_counts, qname)  
+            counts['N'] += 1
         pass
     
     counts['T'] += counts['U']
     del counts['U']
-    counts['unique_reads'] = len(unique_reads)
-    return counts
-        
-        
-
-def count_bases2(col, cutoff=-5, mult_counts=None):
-    counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 'low_qual': 0, 'del': 0}    
-    bad_reads = []
-    unique_reads = set([])
+    weighted['T'] += weighted['U']
+    del weighted['U']
     
-    for read in col.pileups:
-        qname = read.alignment.qname
-        unique_reads.add(qname)        
-        increment = get_increment(mult_counts, qname)
-        
-        if read.is_del == 0:    
-            base = read.alignment.seq[read.qpos]
-            qual = ord(read.alignment.qual[read.qpos]) - 33
-            if qual > cutoff and base != 'N':
-                counts[base] += increment
-            elif qual > cutoff:            
-                bad_reads.append(('N', qname))
-                counts['N'] += increment
-            else:
-                bad_reads.append(('low_qual', qname))
-                counts['low_qual'] += increment
-        else:
-            bad_reads.append(('del', qname))
-            counts['del'] += increment
-    # counts['bad'] = len(bad_reads)
-    counts['T'] += counts['U']
-    del counts['U']
     counts['unique_reads'] = len(unique_reads)
-    return counts #, bad_reads
-
-
-
+    return counts, weighted
+        
+        
 def analyse_snps(bamfile, snpfile_open, hit_mode, mult_counts=None, out=sys.stdout):
-    header = ['', 'Pos_SNP', '#Reads', '#Reads_Col', '#Reads_Ped', 
+    header = ['', 'Pos_SNP', '#UniqueReads', '#Hits', '#Reads_Col', '#Reads_Ped', '#Score_Col', '#Score_Ped',
               '#Reads_N', '#Reads_lowqual', '#Reads_del', '#Reads_other']
     if hit_mode == 'intra':
         header[0] = 'AGI'
@@ -167,14 +144,16 @@ def analyse_snps(bamfile, snpfile_open, hit_mode, mult_counts=None, out=sys.stdo
         base_count = None
         for col in bamfile.pileup(region=region):
             if start == col.pos:
-                base_count = count_bases(col, mult_counts=mult_counts) 
+                base_count, weighted = count_bases(col, mult_counts=mult_counts) 
     
         if base_count is not None:            
             out = [None, end, 
-                   sum(base_count.values()) - base_count['unique_reads'],
-                   # base_count['unique_reads'],
+                   base_count['unique_reads'],
+                   sum(base_count.values()) - (base_count['unique_reads'] + base_count['del']),                   
                    base_count[attributes['refbase']],
                    base_count[attributes['mutation']],
+                   weighted[attributes['refbase']],
+                   weighted[attributes['mutation']],
                    base_count['N'],
                    base_count['low_qual'],
                    base_count['del'],
@@ -200,8 +179,15 @@ def analyse_snps(bamfile, snpfile_open, hit_mode, mult_counts=None, out=sys.stdo
 def main(argv):
     
     snp_fn = argv[0]
-    hit_mode = argv[1]
-    multi_hits = 'mult' in argv[2:]
+    if 'intra' in snp_fn:
+        hit_mode = 'intra'
+    elif 'inter' in snp_fn:
+        hit_mode = 'inter'
+    else:
+        sys.stderr.write('Cannot find hit mode: %s. Exiting.\n' % snp_fn)
+        sys.exit(1)
+    
+    multi_hits = 'mult' in snp_fn
     
     bam_fn = snp_fn[:snp_fn.find('_')] + '.bam'
     mult_counts = None
