@@ -60,24 +60,28 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     # get all mates and multimappings
     count_ = 0
     for read in col.pileups:
-        count_ += 1
-        if read.alignment.flag & 0x40:
-            print 'xx'
-        print 'dINC', get_increment(mult_counts, read.alignment.qname)
-        unique_reads.add(read.alignment.qname)        
-        if read.is_del == 0:
-            reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
-            
-        else:
-            bad_reads.append(('del', read.alignment.qname))
-            weighted['del'] += get_increment(mult_counts, read.alignment.qname)
-            counts['del'] += 1
-    print reads
-    print count_
+        unique_reads.add(read.alignment.qname)
+        reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
+        
+    
+    # for read in col.pileups:
+    #    count_ += 1
+    #    if read.alignment.flag & 0x40:
+    #        print 'xx'
+    #    print 'dINC', get_increment(mult_counts, read.alignment.qname)
+    #    unique_reads.add(read.alignment.qname)        
+    #    if read.is_del == 0:
+    #        reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
+    #        
+    #    else:
+    #        bad_reads.append(('del', read.alignment.qname))
+    #        weighted['del'] += get_increment(mult_counts, read.alignment.qname)
+    #        counts['del'] += 1
+    #print reads
+    #print count_
         
     # sort out the multimappings in paired-end reads
     if mult_counts is not None:
-        # print 'XXX'
         tmp_reads = []    
         for qname in reads:
             tmp_reads += find_unique_mate_pairs(reads[qname]) 
@@ -91,29 +95,42 @@ def count_bases(col, cutoff=-5, mult_counts=None):
         
         base1, base2 = pair[0].alignment.seq[pair[0].qpos], None
         qual1, qual2 = ord(pair[0].alignment.qual[pair[0].qpos]) - 33, None
+        isdel1, isdel2 = pair[0].is_del == 1, None 
+        
         if len(pair) == 1:
             base, qual = base1, qual1
         else:
             base2 = pair[1].alignment.seq[pair[1].qpos]
             qual2 = ord(pair[1].alignment.qual[pair[1].qpos]) - 33
+            isdel2 = pair[1].is_del == 1
             
-            if base1 == base2:
-                # mates agree => check base  
-                base, qual = base1, max(qual1, qual2)            
-            # elif qual1 == qual2:
+            if isdel1 and isdel2:
+                bad_reads.append(('del', pair[0].alignment.qname))
+                weighted['del'] += get_increment(mult_counts, pair[0].alignment.qname)
+                counts['del'] += 1
+            elif isdel1:
+                base, qual = base2, qual2
+            elif isdel2:
+                base, qual = base1, qual1
             else:
-                # the mates do not agree at this position and have equal quality => discard read
-                weighted['mates_disagree'] += get_increment(mult_counts, qname) 
-                counts['mates_disagree'] += 1
-                bad_reads.append(('mates_disagree', qname))
-                continue # <- important!
-            # elif qual1 > qual2:
-            #    # mates disagree with mate1 having higher quality
-            #    base, qual = base1, qual1
-            # else:
-            #    # mates disagree with mate2 having higher quality
-            #    base, qual = base2, qual2
+                if base1 == base2:
+                    # mates agree => check base  
+                    base, qual = base1, max(qual1, qual2)            
+                # elif qual1 == qual2:
+                else:
+                    # the mates do not agree at this position and have equal quality => discard read
+                    weighted['mates_disagree'] += get_increment(mult_counts, qname) 
+                    counts['mates_disagree'] += 1
+                    bad_reads.append(('mates_disagree', qname))
+                    continue # <- important!
+                # elif qual1 > qual2:
+                #    # mates disagree with mate1 having higher quality
+                #    base, qual = base1, qual1
+                # else:
+                #    # mates disagree with mate2 having higher quality
+                #    base, qual = base2, qual2
             
+        
         if qual > cutoff and base != 'N':
             weighted[base] += get_increment(mult_counts, qname)
             counts[base] += 1
