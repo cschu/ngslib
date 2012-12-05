@@ -64,7 +64,7 @@ def find_mobileRNAs(hits_d, sampleIDs, normalise={}, cutoff=3, out=sys.stdout):
 def filter_regions(hits_d, snp_cutoff=SNP_CUTOFF):
     for region, region_d in hits_d.items():
         for snp, snp_d in region_d.items():
-            for sampleID, sample_d in snp_d:
+            for sampleID, sample_d in snp_d.items():
                 if sample_d['col'] < snp_cutoff and sample_d['ped'] < snp_cutoff:
                     del hits_d[region][snp][sampleID]
             if len(hits_d[region][snp]) == 0:
