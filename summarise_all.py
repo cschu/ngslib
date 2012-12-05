@@ -23,12 +23,18 @@ def process_hits(open_fn):
         else:
             row_d = dict(zip(header[2:], map(float, row[2:])))
         
-        if row_d['#Reads_Col'] >= SNP_CUTOFF or row_d['#Reads_Ped'] >= SNP_CUTOFF:
-            hits[region] = hits.get(region, {})
-            hits[region][row[1]] = {'col': row_d['#Reads_Col'], 
-                                    'ped': row_d['#Reads_Ped'],
-                                    'other': row_d['#Reads_other']}
-            total += row_d['#Reads_other']
+        # if row_d['#Reads_Col'] >= SNP_CUTOFF or row_d['#Reads_Ped'] >= SNP_CUTOFF:
+        if region not in hits:
+            # hits[region] = hits.get(region, {row[1]: {'col': 0, 'ped': 0, 'other': 0}})
+            hits[region] = {row[1]: {'col': 0, 'ped': 0, 'other': 0}}
+        for k1, k2 in [('#Reads_Col', 'col'), ('#Reads_Ped', 'ped'), ('#Reads_other', 'other')]:
+            hits[region][row[1]][k2] += row_d[k1]
+            total += row_d[k1]
+            # hits[region][row[1]] = {'col': row_d['#Reads_Col'], 
+            #                        'ped': row_d['#Reads_Ped'],
+            #                        'other': row_d['#Reads_other']}
+            # total += row_d['#Reads_other']
+            # total += sum(hits[region][row[1]].values())
             
     return hits, total
 
@@ -52,6 +58,18 @@ def find_mobileRNAs(hits_d, sampleIDs, normalise={}, cutoff=3, out=sys.stdout):
                                    normalise_RPM(len(mobile_counts[sid]), normalise.get(sid, 10**6))))
     pass
                   
+def filter_regions(hits_d, snp_cutoff=SNP_CUTOFF):
+    for region, region_d in hits_d.items():
+        for snp, snp_d in region_d.items():
+            for sampleID, sample_d in snp_d:
+                if sample_d['col'] < snp_cutoff and sample_d['ped'] < snp_cutoff:
+                    del hits_d[region][snp][sampleID]
+            if len(hits_d[region][snp]) == 0:
+                del hits_d[region][snp]
+        if len(hits_d[region]) == 0:
+            del hits_d[region]
+    return hits_d
+                    
                          
 
 def write_perSNP_summary(hits_d, sampleIDs, col0, normalise=None, out=sys.stdout):
@@ -129,8 +147,7 @@ def main(argv):
         sampleID = os.path.basename(fn)
         sampleID = sampleID.lstrip(prefix)
         sampleID = sampleID[:sampleID.find('.')]
-        sampleIDs.add(sampleID)
-        
+        sampleIDs.add(sampleID)        
         
         hits_d, total = process_hits(open(fn))
         total_reads[sampleID] = total_reads.get(sampleID, 0) + total        
@@ -145,6 +162,8 @@ def main(argv):
     # print all_hits
     # print
     # print
+    all_hits = filter_regions(all_hits)
+    
     write_perSNP_summary(all_hits, sorted(list(sampleIDs)), col0, out=open('%sgenic_snp_summary.csv' % mode, 'wb'))
     write_perSNP_summary(all_hits, sorted(list(sampleIDs)), col0, 
                          normalise=total_reads, out=open('%sgenic_snp_summary_normalised.csv' % mode, 'wb'))
