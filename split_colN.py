@@ -8,10 +8,13 @@ import sys
 import pysam
 
 def main(argv):
+        
     bamfile = pysam.Samfile(argv[0], 'rb')    
     reads = {}
     for alignedRead in bamfile.fetch():
         reads[alignedRead.qname] = reads.get(alignedRead.qname, []) + [alignedRead]
+    
+    header = bamfile.header
     bamfile.close()
     
     total = sum([len(v) for v in reads.values()])
