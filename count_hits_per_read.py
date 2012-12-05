@@ -10,7 +10,7 @@ import pysam
 def main(argv):
     bamfile = pysam.Samfile(argv[0], 'rb')
     counts = {}
-    for alignedRead in bamfile.fetch():
+    for alignedRead in bamfile.fetch(until_eof=True):
         if alignedRead.flag & 0x40 == 0x40 or alignedRead.flag == 0:
             counts[alignedRead.qname] = counts.get(alignedRead.qname, 0) + 1
     bamfile.close()

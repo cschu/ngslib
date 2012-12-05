@@ -60,7 +60,9 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     # get all mates and multimappings
     count_ = 0
     for read in col.pileups:
-        unique_reads.add(read.alignment.qname)
+        if read.alignment.flag & 0x4:
+            continue
+        unique_reads.add(read.alignment.qname)        
         reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
         
     
@@ -98,8 +100,9 @@ def count_bases(col, cutoff=-5, mult_counts=None):
         qual1, qual2 = ord(pair[0].alignment.qual[pair[0].qpos]) - 33, None
         isdel1, isdel2 = pair[0].is_del == 1, None 
         
+        
         if len(pair) == 1:
-            base, qual, isdel = base1, qual1, isdel1
+            base, qual, isdel = base1, qual1, isdel1            
         else:
             base2 = pair[1].alignment.seq[pair[1].qpos]
             qual2 = ord(pair[1].alignment.qual[pair[1].qpos]) - 33
@@ -109,6 +112,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
                 bad_reads.append(('del', qname))
                 weighted['del'] += get_increment(mult_counts, qname)
                 counts['del'] += 1
+                continue
             elif isdel1:
                 base, qual, isdel = base2, qual2, False
             elif isdel2:
@@ -116,7 +120,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             else:
                 if base1 == base2:
                     # mates agree => check base  
-                    base, qual = base1, max(qual1, qual2)            
+                    base, qual, isdel = base1, max(qual1, qual2), False            
                 # elif qual1 == qual2:
                 else:
                     # the mates do not agree at this position and have equal quality => discard read
@@ -232,7 +236,8 @@ def main(argv):
     
     multi_hits = 'mult' in snp_fn
     
-    bam_fn = snp_fn[:snp_fn.find('_')] + '.bam'
+    # bam_fn = snp_fn[:snp_fn.find('_')] + '.bam'
+    bam_fn = argv[1]
     mult_counts = None
     if multi_hits:
         items = [line.strip().split('\t') 
