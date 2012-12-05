@@ -25,8 +25,10 @@ def process_hits(open_fn):
         
         # if row_d['#Reads_Col'] >= SNP_CUTOFF or row_d['#Reads_Ped'] >= SNP_CUTOFF:
         if region not in hits:
+            region[hits] = {}
+        if row[1] not in region[hits]:
             # hits[region] = hits.get(region, {row[1]: {'col': 0, 'ped': 0, 'other': 0}})
-            hits[region] = {row[1]: {'col': 0, 'ped': 0, 'other': 0}}
+            hits[region][row[1]] = {'col': 0, 'ped': 0, 'other': 0}
         for k1, k2 in [('#Reads_Col', 'col'), ('#Reads_Ped', 'ped'), ('#Reads_other', 'other')]:
             # hits[region][row[1]][k2] += row_d[k1]
             hits[region][row[1]][k2] = hits[region][row[1]].get(k2, 0) + row_d[k1]
