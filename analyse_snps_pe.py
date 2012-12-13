@@ -64,7 +64,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             continue
         unique_reads.add(read.alignment.qname)        
         reads[read.alignment.qname] = reads.get(read.alignment.qname, []) + [read]
-        
+    # print unique_reads, len(unique_reads)
     
     # for read in col.pileups:
     #    count_ += 1
@@ -95,6 +95,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     for qname, pair in reads.items():
         # print 'INC', get_increment(mult_counts, qname)
         # print qname, pair, len(pair)
+        print qname
 
         base1, base2 = pair[0].alignment.seq[pair[0].qpos], None
         qual1, qual2 = ord(pair[0].alignment.qual[pair[0].qpos]) - 33, None
@@ -102,6 +103,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
         
         
         if len(pair) == 1:
+            # print 'x', base1, qual1, isdel1
             base, qual, isdel = base1, qual1, isdel1            
         else:
             base2 = pair[1].alignment.seq[pair[1].qpos]
@@ -140,6 +142,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
             weighted['del'] += get_increment(mult_counts, qname)
             counts['del'] += 1            
         elif qual > cutoff and base != 'N':
+            print 'x', base, qual
             weighted[base] += get_increment(mult_counts, qname)
             counts[base] += 1
         elif qual < cutoff:
@@ -159,7 +162,7 @@ def count_bases(col, cutoff=-5, mult_counts=None):
     del weighted['U']
     
     counts['unique_reads'] = len(unique_reads)
-
+    print counts
     # print counts
     # print weighted
 

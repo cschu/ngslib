@@ -25,8 +25,8 @@ def process_hits(open_fn):
         
         # if row_d['#Reads_Col'] >= SNP_CUTOFF or row_d['#Reads_Ped'] >= SNP_CUTOFF:
         if region not in hits:
-            region[hits] = {}
-        if row[1] not in region[hits]:
+            hits[region] = {}
+        if row[1] not in hits[region]:
             # hits[region] = hits.get(region, {row[1]: {'col': 0, 'ped': 0, 'other': 0}})
             hits[region][row[1]] = {'col': 0, 'ped': 0, 'other': 0}
         for k1, k2 in [('#Reads_Col', 'col'), ('#Reads_Ped', 'ped'), ('#Reads_other', 'other')]:
@@ -52,9 +52,9 @@ def find_mobileRNAs(hits_d, sampleIDs, normalise={}, cutoff=3, out=sys.stdout):
             for sampleID in sampleIDs:
                 if sampleID in snp_d:
                     col, ped = snp_d[sampleID]['col'], snp_d[sampleID]['ped']
-                    if col > cutoff and 'ped' in sampleID:
+                    if col >= cutoff and 'ped' in sampleID:
                         mobile_counts[sampleID].add(region)                         
-                    elif ped > cutoff and 'col' in sampleID:
+                    elif ped >= cutoff and 'col' in sampleID:
                         mobile_counts[sampleID].add(region)
     for sid in sorted(sampleIDs):
         out.write('%s\t%i\t%f\n' % (sid, len(mobile_counts[sid]), 
