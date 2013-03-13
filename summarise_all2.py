@@ -13,17 +13,20 @@ import pickle
 SNP_CUTOFF = 3
 
 def process_hits(open_fn):
+    # print open_fn.name
     reader = csv.reader(open_fn, delimiter=',', quotechar='"')
     total = 0
     
     hits = {}
     for row in reader:
+        
         region = row[0].strip()
+        # print region
         if region in ('AGI', 'Contig'):
             header = row
             continue
         else:
-            row_d = dict(zip(header[2:], map(float, row[2:])))
+            row_d = dict(zip(header[2:], map(float, row[2:-2])))
         
         if region not in hits:            
             hits[region] = {}
@@ -134,28 +137,42 @@ def write_perGene_summary(hits_d, sampleIDs, normalise=None, out=sys.stdout):
             row.append(region_counts[sampleID]['cov'])
         out.write('%s\n' % ','.join(map(str, row)))
     return transcript_count
-            
+
+# nodupes means that reads that hit two or more SNPs are only counted once            
 def write_perGeneSummary_nodupes(rpg, sampleIDs, normalise=None, out=sys.stdout, cutoff=3):
     header = ['AGI', '#SNPs'] + ['%s:col,%s:ped,%s:hits' % (sid, sid, sid)
                                  for sid in sampleIDs] 
     out.write('%s\n' % ','.join(header))
     # this works even if stupid eclipse shows an error!
+    
     regions = sorted(set([item for sublist in [v.keys() for v in rpg.values()] for item in sublist]))
     transcript_count = dict(zip(sampleIDs, [0 for sid in sampleIDs]))
     for region in regions:
+        # if region != 'AT1G33370': continue
         row = [region, '']
+        allow_region = False
         for sampleID in sampleIDs:
             values = [0, 0, 0]
             if region in rpg[sampleID]:
-                values = [rpg[sampleID][region]['col'],
-                          rpg[sampleID][region]['ped']]
-                if max(values) >= cutoff:
-                    transcript_count[sampleID] += 1                
-                values.append(sum(values))
+                # print region, sampleID, 'XXX'
+                
+                total = rpg[sampleID][region]['col'] + rpg[sampleID][region]['ped']
+                # 2013-01-21: why is the sum of col and ped reads used as cutoff criterion?
+                # if total >= cutoff:
+                if rpg[sampleID][region]['col'] >= cutoff or rpg[sampleID][region]['ped'] >= cutoff:
+                    allow_region = True
+                    values = [rpg[sampleID][region]['col'],
+                              rpg[sampleID][region]['ped'],
+                              total]
+                    transcript_count[sampleID] += 1
+                # print values, max(values), cutoff                                
+                # values.append(sum(values))
+                # if max(values[:2]) >= cutoff:                    
                 if normalise is not None:
                     values = map(lambda x:normalise_RPM(x, normalise[sampleID]), values)
             row.extend(values)
-        out.write('%s\n' % ','.join(map(str, row)))
+        if allow_region:
+            out.write('%s\n' % ','.join(map(str, row)))
     return transcript_count
             
                           
@@ -199,10 +216,13 @@ def main(argv):
         print '%s: %i genes\n' % (k, len(c))
     # return None
     
+    """
     try:
         prefix = args[0][:args[0].find('.') + 1]
     except:
         prefix = '002.'
+    """
+    prefix = '003.'
     
     all_hits = {}
     sampleIDs = set([])
