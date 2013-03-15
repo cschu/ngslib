@@ -27,9 +27,9 @@ def main(argv):
                 ped_count = accessions.count(ped)
                 # at least 5% of accessions have to support either SNP 
                 if (col_count / N_ACCESSIONS) >= CUTOFF and (ped_count / N_ACCESSIONS) >= CUTOFF:
-                     line += map(str, [col_count, ped_count, col, ped])
-                     OUT.write(' '.join(line) + '\n')
-                     snpcount += 1
+                    line += map(str, [col_count, ped_count, col, ped])
+                    OUT.write(' '.join(line) + '\n')
+                    snpcount += 1
     OUT.write('%i multicovered SNPs found.\n' % snpcount)
         
     
