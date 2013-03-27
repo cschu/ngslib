@@ -39,7 +39,8 @@ class Transcript(object):
     def __str__(self):
         return '\t'.join(map(str, [self.id_, self.contig, self.type, self.start, self.end, '"%s"' % self.strand]))
     
-    
+    def get_key(self):
+        return (self.id_, self.contig, self.type, self.start, self.end, self.strand)
     
 
     def check_snps(self, cutoff=3, sample=None):
@@ -124,9 +125,6 @@ class Transcript(object):
         c = Counter([snp.check_support() for snp in self.snps if snp.is_covered])
         support_col, support_ped = c['Col'] + c['both'], c['Ped'] + c['both']
         total = sum(c.values())
-        string = '\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i' % (support_col, total, support_ped, total, c['both'], total)
-        string += ', CONFLICT=%s' % has_conflict
-        
         
         if sample == 'Col':
             is_mobile = support_ped > 0
@@ -134,12 +132,14 @@ class Transcript(object):
             is_mobile = support_col > 0
         else:
             is_mobile = False
-            
-        string += ', MOBILE_CANDIDATE=%s' % is_mobile
         
+        string = '\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i' % (support_col, total, support_ped, total, c['both'], total)
+        string += ', CONFLICT=%s' % has_conflict
+        string += ', MOBILE_CANDIDATE=%s' % is_mobile        
         string += ', P=%s' % str(gmean_p_pileup)
         
-        return string
+        #return string
+        return support_col, total, support_ped, c['both'], has_conflict, is_mobile, gmean_p_pileup
     
     def check_snps_old(self, cutoff=3, sample=None):
         support_flags = [snp.check_support() for snp in self.snps if snp.is_covered]
@@ -371,6 +371,15 @@ def process_pileups(bamfile, snp_d, read_checklist):
 
 
 
+"""
+string = '\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i' % (support_col, total, support_ped, total, c['both'], total)
+        string += ', CONFLICT=%s' % has_conflict
+        string += ', MOBILE_CANDIDATE=%s' % is_mobile        
+        string += ', P=%s' % str(gmean_p_pileup)
+        
+        #return string
+        return support_col, total, support_ped, c['both'], has_conflict, is_mobile, gmean_p_pileup
+"""
 
 
 def show_data(transcript_d, snp_d, sample=None):
@@ -384,7 +393,9 @@ def show_data(transcript_d, snp_d, sample=None):
             if not snp.is_covered:
                 continue
             if not transcript_shown:
-                print transcript_d[k], '\t', transcript_d[k].check_snps(sample=sample)
+                support_col, total, support_ped, support_both, has_conflict, is_mobile, gmean_pp = transcript_d[k].check_snps(sample=sample)
+                string = '\t\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i, CONFLICT=%s, MOBILE_CANDIDATE=%s, P=%s'                
+                print transcript_d[k], string % (support_col, total, support_ped, total, support_both, total, has_conflict, is_mobile, str(gmean_pp))
                 transcript_shown = True
             print '\t',
             # print snp, '\t', 'COVERED=%s' % snp.is_covered, '\t', snp.check_support(),
