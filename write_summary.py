@@ -39,7 +39,7 @@ def write_summary(transcript_data, samplenames):
     
     sys.stdout.write('\t'.join(['AGI', 'Contig', 'Type', 'Start', 'End', 'Strand']) + '\t')
     for sn in samplenames:
-        sys.stdout.write('\t'.join(['%s:%s' % (sn, head) 
+        sys.stdout.write('\t'.join(['%s:%s' % (sn.rstrip('_TRANSCRIPTDATA.pickled'), head) 
                                     for head in ['Total_SNPs', 'SNPs_Col', 'SNPs_Ped', 'SNPs_both', 'Conflict?', 'Mobile_Candidate?', 'P']]) + '\t')   
     
     for k in sorted(transcript_data):
@@ -55,7 +55,7 @@ def write_summary(transcript_data, samplenames):
 def main(argv):
     
     transcript_data = {}
-    samplenames = [os.path.basename(arg).rstrip('_TRANSCRIPTDATA.pickled') for arg in argv]
+    samplenames = [os.path.basename(arg) for arg in argv]
     for fn in argv:
         data = pickle.load(open(fn, 'rb'))
         gather_transcript_data(data, transcript_data, os.path.basename(fn))
