@@ -39,7 +39,7 @@ def write_summary(transcript_data, samplenames):
     
     sys.stdout.write('\t'.join(['AGI', 'Contig', 'Type', 'Start', 'End', 'Strand']) + '\t')
     for sn in samplenames:
-        sys.stdout.write('\t'.join(['%s:%s' % (sn.rstrip('_TRANSCRIPTDATA.pickled'), head) 
+        sys.stdout.write('\t'.join(['%s:%s' % (sn.strip('_TRANSCRIPTDATA.pickled'), head) 
                                     for head in ['Total_SNPs', 'SNPs_Col', 'SNPs_Ped', 'SNPs_both', 'Conflict?', 'Mobile_Candidate?', 'P']]) + '\t')   
     
     for k in sorted(transcript_data):
