@@ -3,6 +3,7 @@
 Created on Mar 1, 2013
 
 @author: Christian Schudoma (schudoma@mpimp-golm.mpg.de, cschu@darkjade.net)
+http://imgur.com/gallery/08ham
 '''
 import sys
 

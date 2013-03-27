@@ -10,7 +10,8 @@ import sys
 #
 def count_bases(col, cutoff=-5, mult_counts=None):
     counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'U': 0, 'N': 0, 
-              'low_qual': 0, 'del': 0, 'mates_disagree': 0}
+              'low_qual': 0, 'del': 0, 'mates_disagree': 0,
+              'unique_reads': 0}
     reads_at_pos = dict(zip(counts.keys(), [[] for k in counts.keys()]))  
     weighted = dict([(k, 0) for k in counts])
     bad_reads = []

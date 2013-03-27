@@ -8,16 +8,18 @@ import sys
 import pickle
 
 def main(argv):
-    
+    agis = ['AT4G20270', 'AT3G56040']
+    agis = ['AT4G16330', 'AT4G15920', 'AT4G14060']
     # agi = argv[0]
     rpg_files = argv[0:]
     
-    for agi in ['AT4G20270', 'AT3G56040']:
+    for agi in agis:
         for fn in rpg_files:
             dat = pickle.load(open(fn))
+            # print dat.keys()
         
-            ped = [x[0] for x in dat[agi] if x[2]]
-            col = [x[0] for x in dat[agi] if not x[2]]
+            ped = [x[0] for x in dat.get(agi, []) if x[2]]
+            col = [x[0] for x in dat.get(agi, []) if not x[2]]
         
             conflict = set(ped).intersection(set(col))
             ped_uniq = sorted(set(ped) - conflict)
