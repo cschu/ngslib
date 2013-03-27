@@ -37,7 +37,7 @@ def gather_transcript_data(transcripts, transcript_read_data, sample_name):
 
 def write_summary(transcript_data, samplenames):
     for k in sorted(transcript_data):
-        line = '\t'.join(map(str, k))
+        line = '\t'.join(map(str, k)) + '\t'
         for sn in samplenames:
             line += '\t'.join(map(str, transcript_data[k][sn]))
         sys.stdout.write(line + '\n')
