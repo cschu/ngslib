@@ -58,7 +58,7 @@ def main(argv):
     samplenames = [os.path.basename(arg).rstrip('_TRANSCRIPTDATA.pickled') for arg in argv]
     for fn in argv:
         data = pickle.load(open(fn, 'rb'))
-        gather_transcript_data(data, transcript_data, fn)
+        gather_transcript_data(data, transcript_data, os.path.basename(fn))
     
     write_summary(transcript_data, samplenames)
     
