@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 Created on Mar 27, 2013
 
@@ -8,6 +9,10 @@ import sys
 import os
 
 import pickle
+
+from analyse_snps_by_transcript import Transcript
+from analyse_snps_by_transcript import SNP_Position 
+
 
 
 def gather_transcript_data(transcripts, transcript_read_data, sample_name):
