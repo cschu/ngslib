@@ -422,23 +422,24 @@ def get_timestamp():
 
 def main(argv):
     
-    if len(argv) > 2:
+    if len(argv) > 3:
         sys.stderr.write('%s: MODE1\n' % get_timestamp())
         sys.stderr.write('')
         transcript_d, snp_d = read_transcript_data(open(argv[0]))
         # show_data(transcript_d, snp_d)
         sample = argv[1]
+        prefix = argv[2]
         read_checklist = set([])
-        for bam_fn in argv[2:]:  
+        for bam_fn in argv[3:]:  
             sys.stderr.write('%s: Processing file %s...\n' % (get_timestamp(), bam_fn))      
             process_pileups(pysam.Samfile(bam_fn, 'rb'), snp_d, read_checklist)    
             # show_data(transcript_d, snp_d)
             # break
         # print list(read_checklist), len(read_checklist)
         ts = get_timestamp()
-        pickle.dump(snp_d, open(ts + '_SNPDATA.pickled', 'wb'))
-        pickle.dump(transcript_d, open(ts + '_TRANSCRIPTDATA.pickled', 'wb'))
-        pickle.dump(read_checklist, open(ts + '_READCHECKLIST.pickled', 'wb'))
+        pickle.dump(snp_d, open(prefix + '_SNPDATA.pickled', 'wb'))
+        pickle.dump(transcript_d, open(prefix + '_TRANSCRIPTDATA.pickled', 'wb'))
+        pickle.dump(read_checklist, open(prefix + '_READCHECKLIST.pickled', 'wb'))
     else:
         sys.stderr.write('%s: MODE2\n' % get_timestamp())
         sys.stderr.write('%s: Loading data from %s.\n' % (get_timestamp(), argv[0]))

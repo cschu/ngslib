@@ -16,6 +16,8 @@ header = ['AGI', 'Pos_SNP', '#Reads', '#Reads_Col', '#Reads_Ped',
 header = ['#Reads', '#Reads_Col', '#Reads_Ped', 
           '#Reads_N', '#Reads_lowqual', '#Reads_del', '#Reads_other']
 
+
+
 class AthGene(object):
     def __init__(self, agi, snp=None):
         self.agi = agi
@@ -49,6 +51,11 @@ class AthSNP(object):
 """
 header = ['AGI', 'Pos_SNP', '#Reads', '#Reads_Col', '#Reads_Ped', 
           '#Reads_N', '#Reads_lowqual', '#Reads_del', '#Reads_other']
+"""
+
+"""
+header = ['', 'Pos_SNP', '#UniqueReads', '#Hits', '#Reads_Col', '#Reads_Ped', '#Score_Col', '#Score_Ped',
+              '#Reads_N', '#Reads_lowqual', '#Reads_del', '#Reads_other']
 """
 
 def write_perGene_summary(genes, sampleIDs, count_mask, header, delimiter=',', multi_hits=False, out=sys.stdout):
