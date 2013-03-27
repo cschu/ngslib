@@ -37,7 +37,7 @@ def gather_transcript_data(transcripts, transcript_read_data, sample_name):
 
 def write_summary(transcript_data, samplenames):
     
-    sys.stdout.write('\t'.join(['AGI', 'Contig', 'Type', 'Start', 'End', 'Strand'])) + '\t'
+    sys.stdout.write('\t'.join(['AGI', 'Contig', 'Type', 'Start', 'End', 'Strand']) + '\t')
     for sn in samplenames:
         sys.stdout.write('\t'.join(['%s:%s' % (sn, head) 
                                     for head in ['Total_SNPs', 'SNPs_Col', 'SNPs_Ped', 'SNPs_both', 'Conflict?', 'Mobile_Candidate?', 'P']]) + '\t')   
