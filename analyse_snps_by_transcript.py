@@ -54,6 +54,7 @@ class Transcript(object):
     def get_full_string(self):
         string = str(self) + '\t\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i, CONFLICT=%s, MOBILE_CANDIDATE=%s, P=%s'
         return string % (self.support_col, self.support_total, self.support_ped, self.support_total,
+                         self.support_both, self.support_total,
                          self.has_conflict, self.is_mobile, str(self.binom_score))
     
     def calculate_binom_score(self, sample=''):
