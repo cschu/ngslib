@@ -440,6 +440,7 @@ def main(argv):
         pickle.dump(snp_d, open(prefix + '_SNPDATA.pickled', 'wb'))
         pickle.dump(transcript_d, open(prefix + '_TRANSCRIPTDATA.pickled', 'wb'))
         pickle.dump(read_checklist, open(prefix + '_READCHECKLIST.pickled', 'wb'))
+	# sys.exit(0)
     else:
         sys.stderr.write('%s: MODE2\n' % get_timestamp())
         sys.stderr.write('%s: Loading data from %s.\n' % (get_timestamp(), argv[0]))
