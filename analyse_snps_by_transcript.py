@@ -323,6 +323,7 @@ def process_pileups(bamfile, snp_d, read_checklist):
 def write_data(transcript_d, sample='', prefix=''):
     fo = open(prefix + '_SNPTABLE.csv', 'w')
     candidates = []
+    sys.stderr.write('%s: Writing SNP/transcript table...\n' % (get_timestamp())) 
     for k in sorted(transcript_d):
         transcript_shown = False
         show_snps = reduce(lambda x,y:x or y, [snp.is_covered for snp in transcript_d[k].snps])
@@ -340,7 +341,10 @@ def write_data(transcript_d, sample='', prefix=''):
             fo.write('\t' + str(snp) + '\n')
     fo.close()
     fo = open(prefix + '_RANKED.csv', 'w')
-    ranked = sorted([transcript_d[k] for k in candidates], key=lambda x:x.binom_score, reverse=True)
+    sys.stderr.write('%s: Ranking candidate mobile transcripts (%i candidates)...\n' % (get_timestamp(), len(candidates)))
+    ranked = sorted([transcript_d[k] for k in candidates if transcript_d[k].is_mobile], 
+                    key=lambda x:x.binom_score, reverse=True)
+    sys.stderr.write('%s: Writing ranked transcripts...\n' % (get_timestamp()))
     for transcript in ranked:
         fo.write(transcript_d[k].get_full_string() + '\n')
     fo.close()
