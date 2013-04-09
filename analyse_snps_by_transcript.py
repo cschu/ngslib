@@ -321,7 +321,7 @@ def process_pileups(bamfile, snp_d, read_checklist):
     pass
 
 def write_data(transcript_d, sample='', prefix=''):
-    fo = open(prefix + '_SNPTABLE.csv', 'w')
+    fo = open(prefix + 'SNPTABLE.csv', 'w')
     candidates = []
     sys.stderr.write('%s: Writing SNP/transcript table...\n' % (get_timestamp())) 
     for k in sorted(transcript_d):
@@ -340,7 +340,7 @@ def write_data(transcript_d, sample='', prefix=''):
                 transcript_shown = True
             fo.write('\t' + str(snp) + '\n')
     fo.close()
-    fo = open(prefix + '_RANKED.csv', 'w')
+    fo = open(prefix + 'RANKED.csv', 'w')
     sys.stderr.write('%s: Ranking candidate mobile transcripts (%i candidates)...\n' % (get_timestamp(), len(candidates)))
     ranked = sorted([transcript_d[k] for k in candidates if transcript_d[k].is_mobile], 
                     key=lambda x:x.binom_score, reverse=True)
@@ -416,7 +416,7 @@ def main(argv):
     # print '======'
     
     #show_data(transcript_d, None, sample=argv[1])
-    write_data(transcript_d, sample=argv[1], prefix=argv[0].rstrip('_TRANSCRIPTDATA.pickled'))
+    write_data(transcript_d, sample=argv[1], prefix=argv[0].rstrip('TRANSCRIPTDATA.pickled'))
     pass
 
 if __name__ == '__main__': main(sys.argv[1:])
