@@ -346,7 +346,7 @@ def write_data(transcript_d, sample='', prefix=''):
                     key=lambda x:x.binom_score, reverse=True)
     sys.stderr.write('%s: Writing ranked transcripts...\n' % (get_timestamp()))
     for transcript in ranked:
-        fo.write(transcript_d[k].get_full_string() + '\n')
+        fo.write(transcript.get_full_string() + '\n')
     fo.close()
     pass
     
