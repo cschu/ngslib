@@ -12,6 +12,7 @@ import time
 import datetime
 
 import scipy.stats as stats
+import scipy
 
 from collections import Counter
 
@@ -24,6 +25,14 @@ PILEUP_ATTR = ['support_refbase', 'support_mutation', 'N_at_pos', 'mismatches', 
 R_PILEUP_ATTER = ['r_support_refbase', 'r_support_mutation', 'r_N_at_pos', 'r_mismatches', 'r_lowqual', 'r_indel', 'r_n_aligned_reads']
 
 from count_bases import count_bases
+
+def stats_binom_wrapper(x, n, p):
+    # 0.13.0.dev-2bd1af0
+    if scipy.__version__ >= '0.13' or (p != 1 and p != 0):
+        return stats.binom.pmf(x, n, p)
+    else:
+        return float(p)
+
 
 class Transcript(object):
     def __init__(self, attributes):
@@ -42,143 +51,68 @@ class Transcript(object):
     def get_key(self):
         return (self.id_, self.contig, self.type, self.start, self.end, self.strand)
     
-
-    def check_snps(self, cutoff=3, sample=None):
+    def get_full_string(self):
+        string = str(self) + '\t\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i, CONFLICT=%s, MOBILE_CANDIDATE=%s, P=%s'
+        return string % (self.support_col, self.support_total, self.support_ped, self.support.total,
+                         self.has_conflict, self.is_mobile, str(self.binom_score))
+    
+    def calculate_binom_score(self, sample=''):
+        col_total, ped_total = 1.0, 1.0
         
-        def stats_binom_wrapper(x, n, p):
-            if p == 1: # and x == n:
-                return 1.0
-            elif p == 0: # and x == 0:
-                return 0.0
-            else:
-                return stats.binom.pmf(x, n, p)
-            
-        
-        read_ratios = []
-        
-        if sample == 'Col':
-            numerator = 'refbase'
-        else:
-            numerator = 'mutation'
-            
-        col_total, ped_total = 0.0, 0.0
         for snp in self.snps:
-            if snp.is_covered:
-                read_ratios.append(snp.get_read_ratio(numerator=numerator))
+            if snp.is_covered:                
                 col_total += len(snp.r_support_refbase)
                 ped_total += len(snp.r_support_mutation)
         both_total = col_total + ped_total
         
-        # print 'C=', col_total, 'P=', ped_total, 'B=', both_total
-             
-        """
-        cdf(x, n, p, loc=0)    Cumulative density function.
-        x : array_like quantiles
-        n, p : array_like shape parameters
-        loc : loc : array_like, optional location parameter (default=0)
-        """
         all_p_pileup = []
         for snp in self.snps:
             if snp.is_covered:
-                n_col, n_ped = float(len(snp.r_support_refbase)), float(len(snp.r_support_mutation))
+                n_col, n_ped = float(len(snp.r_support_refbase) + 1), float(len(snp.r_support_mutation) + 1)
                 if both_total == 0:
                     snp.p_pileup = 666.0
                     continue
-                if sample == 'Col':
-                    # print '**'
-                    # print n_col, n_ped, col_total, both_total, col_total/both_total
-                    # p_pileup = stats.binom.pmf(n_col + 1, n_col + n_ped + 2, col_total/both_total)
-                    p_pileup = stats_binom_wrapper(n_col + 1, n_col + n_ped + 2, col_total/both_total)
-                    # print '***'
-                elif sample == 'Ped':
-                    # p_pileup = stats.binom.pmf(n_ped, n_col + n_ped, ped_total/both_total)
+                if sample.lower() == 'col':
+                    p_pileup = stats_binom_wrapper(n_col, n_col + n_ped, col_total/both_total)
+                elif sample.lower() == 'ped':
                     p_pileup = stats_binom_wrapper(n_ped, n_col + n_ped, ped_total/both_total)
                 else:
                     sys.stderr.write('WRONG SAMPLE:%s. Exiting.\n' % str(sample))
                     sys.exit(1)
-                # if p_pileup >= 0.5:
-                #    p_pileup = 1.0 - p_pileup
                 snp.p_pileup = p_pileup
-                all_p_pileup.append(p_pileup)
+                all_p_pileup.append(p_pileup)        
         
-        
-        # print all_p_pileup
-        gmean_p_pileup = stats.mstats.gmean(all_p_pileup)
-        
-                
-        
-        has_conflict = False
-        #if len(read_ratios) >= 0:
-            # mean = sum(read_ratios) / float(len(read_ratios))
-            # stdev = math.sqrt(sum([(ratio - mean) ** 2 for ratio in read_ratios]) / float(len(read_ratios) - 1))
-        
+        self.binom_score = stats.mstats.gmean(all_p_pileup)
+        pass
+    
+
+    def check_for_mobility(self, sample='', sampledict={'col': 'refbase', 'ped': 'mutation'}):
+        numerator = sampledict.get(sample.lower(), 'refbase')        
+        self.has_conflict = False
          
         for snp in self.snps:
             if snp.is_covered:
-                if snp.get_read_ratio(numerator=numerator) >= 0.5:
-                #if (mean - stdev) <= snp.get_read_ratio(numerator=numerator) <= (mean + stdev):
+                if snp.get_read_ratio(numerator=numerator) >= 0.5:                
                     snp.ratio_ok = True
                 else:
                     snp.ratio_ok = False
-                    has_conflict = True
+                    self.has_conflict = True
         
         c = Counter([snp.check_support() for snp in self.snps if snp.is_covered])
-        support_col, support_ped = c['Col'] + c['both'], c['Ped'] + c['both']
-        total = sum(c.values())
+        self.support_col, self.support_ped = c['Col'] + c['both'], c['Ped'] + c['both']
+        self.support_total = sum(c.values())
+        self.support_both = c['both']
         
-        if sample == 'Col':
-            is_mobile = support_ped > 0
-        elif sample == 'Ped':
-            is_mobile = support_col > 0
+        if self.has_conflict:
+            self.is_mobile = False        
+        elif sample.lower() == 'col':
+            self.is_mobile = self.support_ped > 0
+        elif sample.lower() == 'ped':
+            self.is_mobile = self.support_col > 0
         else:
-            is_mobile = False
-        
-        string = '\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i' % (support_col, total, support_ped, total, c['both'], total)
-        string += ', CONFLICT=%s' % has_conflict
-        string += ', MOBILE_CANDIDATE=%s' % is_mobile        
-        string += ', P=%s' % str(gmean_p_pileup)
-        
-        #return string
-        return support_col, total, support_ped, c['both'], has_conflict, is_mobile, gmean_p_pileup
-    
-    def check_snps_old(self, cutoff=3, sample=None):
-        support_flags = [snp.check_support() for snp in self.snps if snp.is_covered]
-        c = Counter(support_flags)
-        no_support = c['-']
-        del c['-']
-        support_col = c['Col'] + c['both']
-        support_ped = c['Ped'] + c['both']
-        support_both = c['both']
-        total = sum(c.values()) + no_support
-        # del c['both']
-        # total = sum(c.values())
-        
-        string = 'COL: %i/%i, PED: %i/%i, BOTH: %i/%i' % (support_col, total, support_ped, total, c['both'], total)
-        # mc = c.most_common(1)[0]
-        #if mc[0] == 'Col' and mc[1]
-        
-        is_mobile, has_conflict = False, False
-        if sample == 'Col':
-            is_mobile = support_ped > 0
-        elif sample == 'Ped':
-            is_mobile = support_col > 0
-        
-        has_conflict = (support_ped > 0 and support_col > 0 and support_ped != support_col)
-        
-        # string += ', CONFLICT=%s' % (c['Col'] > 0 and c['Ped'] > 0)
-        string += ', CONFLICT=%s' % has_conflict
-        
-        # is_mobile = (sample == 'Col' and support_ped > 0) or (sample == 'Ped' and support_col > 0)
-        string += ', MOBILE=%s' % is_mobile
-        
-        string += '\t' + str(c)
-        
-        
-        return string
-        
-        
-                
-        
+            self.is_mobile = False
+                        
+        pass
     
     pass
     
@@ -197,17 +131,33 @@ class SNP_Position(object):
                 pass
             setattr(self, name, val)
         pass
+    
     def __str__(self):
-                
-                
         
         if hasattr(self, 'support_refbase'):            
+            
+            STR_RATIO_OK = ''
+            if hasattr(self, 'ratio_ok') and not self.ratio_ok:
+                STR_RATIO_OK = '!!'
+            STR_PPILEUP = ''
+            if hasattr(self, 'p_pileup'):
+                STR_PPILEUP =  str(self.p_pileup)
             readstats = '\t'.join(map(str, ['', '', #self.support_refbase, self.support_mutation,
                                             len(self.r_support_refbase), len(self.r_support_mutation),                                            
-                                            'RELIABLE_SNP=%s' % (self.RELIABLE == 'YES')]))
+                                            'RELIABLE_SNP=%s' % (self.RELIABLE == 'YES'),
+                                            self.check_support(),
+                                            '%.5f' % self.get_read_ratio() + ('%s' % STR_RATIO_OK),
+                                            STR_PPILEUP 
+                                            ]))
         else:
-            readstats = '0\t0\t0\t0\tN/A'        
+            readstats = '\t'.join((['0'] * 8) + ['N/A']) #'0\t0\t0\t0\tN/A'        
         return '\t'.join(map(str, [self.pos_0, self.pos_1, self.refbase, self.mutation, readstats]))
+    
+    
+    
+    
+    
+    
     def get_region(self, contig):
         return '%s:%i-%i' % (contig, self.pos_0, self.pos_1)
     def get_read_ratio(self, numerator='refbase'):
@@ -369,18 +319,33 @@ def process_pileups(bamfile, snp_d, read_checklist):
         
     pass
 
-
-
-"""
-string = '\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i' % (support_col, total, support_ped, total, c['both'], total)
-        string += ', CONFLICT=%s' % has_conflict
-        string += ', MOBILE_CANDIDATE=%s' % is_mobile        
-        string += ', P=%s' % str(gmean_p_pileup)
-        
-        #return string
-        return support_col, total, support_ped, c['both'], has_conflict, is_mobile, gmean_p_pileup
-"""
-
+def write_data(transcript_d, sample='', prefix=''):
+    fo = open(prefix + '_SNPTABLE.csv', 'w')
+    candidates = []
+    for k in sorted(transcript_d):
+        transcript_shown = False
+        show_snps = reduce(lambda x,y:x or y, [snp.is_covered for snp in transcript_d[k].snps])
+        if not show_snps:
+            continue
+        candidates.append(k)        
+        transcript_d[k].calculate_binom_score(sample=sample)
+        transcript_d[k].check_for_mobility(sample=sample)
+        for snp in transcript_d[k].snps:
+            if not snp.is_covered:
+                continue
+            if not transcript_shown:
+                fo.write(transcript_d[k].get_full_string() + '\n')
+                transcript_shown = True
+            fo.write('\t' + str(snp) + '\n')
+    fo.close()
+    fo = open(prefix + '_RANKED.csv', 'w')
+    ranked = sorted([transcript_d[k] for k in candidates], key=lambda x:x.binom_score, reverse=True)
+    for transcript in ranked:
+        fo.write(transcript_d[k].get_full_string() + '\n')
+    fo.close()
+    pass
+    
+    
 
 def show_data(transcript_d, snp_d, sample=None):
     for k in sorted(transcript_d):
@@ -389,38 +354,33 @@ def show_data(transcript_d, snp_d, sample=None):
         show_snps = reduce(lambda x,y:x or y, [snp.is_covered for snp in transcript_d[k].snps])
         if not show_snps:
             continue        
+        transcript_d[k].calculate_binom_score(sample=sample)
+        transcript_d[k].check_for_mobility(sample=sample)
         for snp in transcript_d[k].snps:
             if not snp.is_covered:
                 continue
             if not transcript_shown:
-                support_col, total, support_ped, support_both, has_conflict, is_mobile, gmean_pp = transcript_d[k].check_snps(sample=sample)
-                string = '\t\tCOL: %i/%i, PED: %i/%i, BOTH: %i/%i, CONFLICT=%s, MOBILE_CANDIDATE=%s, P=%s'                
-                print transcript_d[k], string % (support_col, total, support_ped, total, support_both, total, has_conflict, is_mobile, str(gmean_pp))
+                print transcript_d[k].get_full_string()
                 transcript_shown = True
-            print '\t',
-            # print snp, '\t', 'COVERED=%s' % snp.is_covered, '\t', snp.check_support(),
-            print snp, '\t', snp.check_support(),
-            print '\t', '%.5f' % snp.get_read_ratio(),
-            if hasattr(snp, 'ratio_ok') and not snp.ratio_ok:
-                print '!!', 
-            else:
-                print '',
-            if hasattr(snp, 'p_pileup'):
-                print '\t', str(snp.p_pileup)
-            else:
-                print ''
-            # print
-#    for k in sorted(snp_d):
-#        print k
-#        for tx in snp_d[k][1:]:
-#            print '\t' + tx
+            print '\t' + str(snp)
+            
     pass    
 
 def get_timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
 
 
-def main(argv):
+def main(argv):    
+    """
+    Input EITHER (to generate per-transcript-results from pileup counts)
+    0. transcript/snp data
+    1. sample name {Col,Ped}
+    2. output prefix (output is <prefix>_<DATATYPE>.pickled)
+    3-n. number of bamfiles
+    OR (to summarise per-transcript-results)
+    0. name of a <arbitrary>_TRANSCRIPTDATA.pickled file 
+    1. sample name {Col,Ped}
+    """
     
     if len(argv) > 3:
         sys.stderr.write('%s: MODE1\n' % get_timestamp())
@@ -450,7 +410,8 @@ def main(argv):
     
     # print '======'
     
-    show_data(transcript_d, None, sample=argv[1])
+    #show_data(transcript_d, None, sample=argv[1])
+    write_data(transcript_d, sample=argv[1], prefix=argv[0].rstrip('_TRANSCRIPTDATA.pickled'))
     pass
 
 if __name__ == '__main__': main(sys.argv[1:])
