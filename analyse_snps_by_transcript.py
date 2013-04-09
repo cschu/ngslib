@@ -328,10 +328,11 @@ def write_data(transcript_d, sample='', prefix=''):
         transcript_shown = False
         show_snps = reduce(lambda x,y:x or y, [snp.is_covered for snp in transcript_d[k].snps])
         if not show_snps:
-            continue
-        candidates.append(k)        
+            continue         
         transcript_d[k].calculate_binom_score(sample=sample)
         transcript_d[k].check_for_mobility(sample=sample)
+        if transcript_d[k].is_mobile and transcript_d[k].binom_score > 10.0 ** -5:
+            candidates.append(k)       
         for snp in transcript_d[k].snps:
             if not snp.is_covered:
                 continue
