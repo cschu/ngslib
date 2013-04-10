@@ -349,6 +349,20 @@ def write_data(transcript_d, sample='', prefix=''):
     for transcript in ranked:
         fo.write(transcript.get_full_string() + '\n')
     fo.close()
+    
+    sys.stderr.write('%s: Generating candidate shortlist...\n' % get_timestamp())
+    cutoff = 0.5
+    if sample.lower() == 'col':    
+        shortlist = [transcript for transcript in ranked 
+                     if float(transcript.support_ped)/transcript.support_total >= cutoff]
+    elif sample.lower() == 'ped':
+        shortlist = [transcript for transcript in ranked 
+                     if float(transcript.support_col)/transcript.support_total >= cutoff]
+    fo = open(prefix + 'SHORTLIST.csv', 'w')
+    sys.stderr.write('%s: Writing candidate shortlist...\n' % get_timestamp())
+    for transcript in shortlist:
+        fo.write(transcript.get_full_string() + '\n')
+    fo.close()
     pass
     
     
