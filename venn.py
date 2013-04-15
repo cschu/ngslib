@@ -88,7 +88,7 @@ def main(argv):
         sets.append((os.path.basename(fn).replace('_TRANSCRIPTDATA.pickled', ''), set_))
     
     print 'SETS =', len(sets)
-    print ''.join(['%s: %i' % (s[0], len(s[1])) for s in sets])
+    print ' '.join(['%s: %i' % (s[0], len(s[1])) for s in sets])
     
     for id_, set_ in process_sets(sets):
         print id_, len(set_)
