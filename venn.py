@@ -112,7 +112,7 @@ return [(('%s') % A[0], A[1] - C[1].union(B[1])),
 """
 
 def generate_diagram(sets, fn):
-    fig = plt.figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(5, 5))
     if len(sets) == 3:
         diagram_f = venn2
         circles_f = venn2_circles      
