@@ -166,7 +166,7 @@ def main(argv):
     fo.write('#\t'.join(['%s: %i' % (s[0], len(s[1])) for s in sets]) + '\n')
     
     processed = process_sets(sets)
-    generate_diagram(outfile + '.png')
+    generate_diagram(processed, outfile + '.png')
     
     for id_, set_ in processed:
         fo.write('%s\t%s\n' % (id_, len(set_)))
