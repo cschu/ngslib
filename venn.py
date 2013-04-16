@@ -153,15 +153,20 @@ def main(argv):
         sets.append((setname, set_))
         setnames.append(setname)
     
-    outfile = '+'.join(setnames) + '.venn.txt'
+    outfile = '+'.join(setnames)# + '.venn.txt'
+    
     if not use_all:
-        outfile = outfile.replace('.txt', '.mobile_only.txt')
-    fo = open(outfile, 'w')
+        outfile += '.mobile_only'
+        # outfile.replace('.venn.txt', '.mobile_only.venn.txt')
+    
+    fo = open(outfile + '.venn.txt', 'w')
+    
+    
     fo.write('#SETS = %i\n' % len(sets))
     fo.write('#\t'.join(['%s: %i' % (s[0], len(s[1])) for s in sets]) + '\n')
     
     processed = process_sets(sets)
-    generate_diagram(processed, '+'.join(setnames) + '.png')
+    generate_diagram(outfile + '.png')
     
     for id_, set_ in processed:
         fo.write('%s\t%s\n' % (id_, len(set_)))
