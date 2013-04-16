@@ -153,7 +153,10 @@ def main(argv):
         sets.append((setname, set_))
         setnames.append(setname)
     
-    fo = open('+'.join(setnames) + '.venn.txt', 'w')
+    outfile = '+'.join(setnames) + '.venn.txt'
+    if not use_all:
+        outfile = outfile.replace('.txt', '.mobile_only.txt')
+    fo = open(outfile, 'w')
     fo.write('#SETS = %i\n' % len(sets))
     fo.write('#\t'.join(['%s: %i' % (s[0], len(s[1])) for s in sets]) + '\n')
     
