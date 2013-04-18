@@ -28,6 +28,12 @@ Nur wenn auch Hoogsteen oder Sugar mit ziehn
 """
 
 
+"""
+MoRD: MObile Rna Database
+SELBST: Sequences Evaluated Late-nightly (with) Beautiful Statistical Tests
+"""
+
+
 
 def vennAB(A, B):    
     return [(('%s') % A[0], A[1] - B[1]), 
@@ -82,14 +88,15 @@ def vennN(sets):
         
                     
         
-    
+
 
 def load_set(data, use_all=True):
     set_ = set()
     for k in data:
         if data[k].has_covered_snps():            
             if use_all or (data[k].is_mobile and data[k].binom_score > 10.0 ** -5):
-                set_.add(k)
+                k_gene = k[:k.rfind('.')]
+                set_.add(k_gene)
     return set_
 
 def process_sets(sets):
@@ -101,15 +108,6 @@ def process_sets(sets):
         return {}
     
         
-"""
-return [(('%s') % A[0], A[1] - C[1].union(B[1])), 
-            (('%s') % B[0], B[1] - A[1].union(C[1])), 
-            (('%s') % C[0], C[1] - B[1].union(A[1])),
-            ('%s_+_%s' % (A[0], B[0]), A[1].intersection(B[1]) - C[1]),
-            ('%s_+_%s' % (A[0], C[0]), A[1].intersection(C[1]) - B[1]),
-            ('%s_+_%s' % (B[0], C[0]), B[1].intersection(C[1]) - A[1]),
-            ('%s_+_%s_+_%s' % (A[0], B[0], C[0]), A[1].intersection(B[1]).intersection(C[1]))]
-"""
 
 def generate_diagram(sets, fn):
     fig = plt.figure(figsize=(5, 5))
