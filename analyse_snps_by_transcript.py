@@ -13,7 +13,7 @@ import pysam
 
 from Transcript import Transcript
 from SNP_Position import SNP_Position
-from TranscriptIO import read_transcript_data, load_transcript_data 
+from TranscriptIO import read_transcript_data, load_transcript_data, get_timestamp 
 from count_bases import count_bases
 
 
@@ -142,8 +142,6 @@ def show_data(transcript_d, snp_d, sample=None):
             
     pass    
 
-def get_timestamp():
-    return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
 
 
 def main(argv):    

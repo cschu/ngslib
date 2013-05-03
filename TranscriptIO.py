@@ -5,10 +5,18 @@ Created on Apr 12, 2013
 @author: Christian Schudoma (schudoma@mpimp-golm.mpg.de, cschu@darkjade.net)
 '''
 import sys
+import time
+import datetime
 import cPickle as pickle
 
 from Transcript import Transcript
 from SNP_Position import SNP_Position
+
+def get_timestamp(file_friendly=False):
+    if file_friendly:
+        return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')
+    else:
+        return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
 
 def load_transcript_data(open_fn, sample=''):
     transcript_d = pickle.load(open_fn)
