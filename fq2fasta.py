@@ -23,7 +23,8 @@ def fq2fasta(fq_in, fas_out=sys.stdout):
 
 
 def main(argv):
-    fq2fasta(open(argv[0], 'r'))
+    for arg in argv:
+        fq2fasta(open(arg, 'r'))
     pass
 
 if __name__ == '__main__': main(sys.argv[1:])
