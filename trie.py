@@ -62,7 +62,7 @@ class DuplicateReadFinder(object):
     def add_sequence(self, sid, seq):
         if 'N' in seq:
             return False
-        seq = seq.replace('T', 'U')
+        seq = seq.upper().replace('T', 'U')
         intree = self.trie.lookup(seq)
         if intree:            
             key = intree[0]
@@ -71,12 +71,13 @@ class DuplicateReadFinder(object):
             self.trie.add(seq, key)            
         self.seqd[key].append(sid)
         return True          
-    def write_sequences(self, out=sys.stdout):      
+    def write_sequences(self, out=sys.stdout, modify_output=lambda x:x):      
         all_seqs = sorted([(id_[0], len(self.seqd[id_[0]]), seq) 
                            for seq, id_ in self.trie.seqs()],
                           key=lambda x:x[1], reverse=True)
+        
         for id_, n, seq in all_seqs:
-            out.write('>%i_%i_%s\n%s\n' % (id_, n, self.seqd[id_][0], seq))            
+            out.write('>%i_%i_%s\n%s\n' % (id_, n, self.seqd[id_][0], modify_output(seq)))            
         pass
         
         
